@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr Jon Summer Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#a94f8d;--brand-light:#f5e6f1;--bg:#f6f4f8;--card:#fff;
+  --green:#3a9e6a;--green-bg:#e3f5ec;--green-dark:#287550;
+  --line:#e8e4ed;--ink:#1a1025;--muted:#6b6578;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink)}
+.wr,.chk{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.app{max-width:1100px;margin:0 auto;padding-bottom:80px}
+
+header{
+  position:sticky;top:0;z-index:99;
+  background:rgba(255,255,255,0.96);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:0 16px;
+}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px}
+.hdr-title h1{font-family:'DM Serif Display',serif;font-size:22px;color:var(--brand);line-height:1}
+.hdr-title p{font-size:11px;color:var(--muted);margin-top:3px;font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+.global-counter{
+  background:var(--brand);color:#fff;
+  border-radius:50px;padding:7px 16px;
+  font-size:13px;font-weight:800;transition:all .2s;
+}
+.global-counter.zero{background:var(--line);color:var(--muted)}
+
+.weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 0 10px}
+.wtab{
+  display:block;border:1.5px solid var(--line);background:#faf9fb;
+  border-radius:12px;padding:8px 5px;text-align:center;cursor:pointer;
+  transition:all .15s;position:relative;
+}
+.wtab b{display:block;font-size:13px;font-weight:800}
+.wtab>span:not(.wk-count){display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.wk-count{
+  display:none;position:absolute;top:-6px;right:-6px;
+  background:var(--green);color:#fff;border-radius:50px;
+  font-size:10px;font-weight:900;padding:2px 6px;min-width:18px;
+  text-align:center;border:2px solid var(--bg);
+}
+.wk-count.show{display:block}
+
+#tab-w1:checked~.app .panel-w1{display:block}
+#tab-w1:checked~.app .tab-w1{background:var(--brand);color:#fff;border-color:var(--brand)}
+#tab-w1:checked~.app .tab-w1 span:not(.wk-count){color:#f4dcec}
+#tab-w2:checked~.app .panel-w2{display:block}
+#tab-w2:checked~.app .tab-w2{background:var(--brand);color:#fff;border-color:var(--brand)}
+#tab-w2:checked~.app .tab-w2 span:not(.wk-count){color:#f4dcec}
+#tab-w3:checked~.app .panel-w3{display:block}
+#tab-w3:checked~.app .tab-w3{background:var(--brand);color:#fff;border-color:var(--brand)}
+#tab-w3:checked~.app .tab-w3 span:not(.wk-count){color:#f4dcec}
+#tab-w4:checked~.app .panel-w4{display:block}
+#tab-w4:checked~.app .tab-w4{background:var(--brand);color:#fff;border-color:var(--brand)}
+#tab-w4:checked~.app .tab-w4 span:not(.wk-count){color:#f4dcec}
+
+.controls-row{display:flex;align-items:center;gap:8px;padding:0 0 12px}
+.clear-btn{
+  flex-shrink:0;background:none;border:1.5px solid var(--line);border-radius:10px;
+  padding:9px 14px;font-size:13px;font-weight:700;color:var(--muted);
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;
+}
+.clear-btn:hover{border-color:#c44;color:#c44}
+.tzselect{
+  flex:1;border:1.5px solid var(--line);border-radius:12px;
+  padding:9px 36px 9px 12px;background:var(--card);font-size:14px;
+  font-family:'DM Sans',sans-serif;color:var(--ink);
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6578' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;
+}
+.tzselect:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-light)}
+
+.panel{display:none}
+
+.wh{padding:18px 16px 6px}
+.wh h2{font-family:'DM Serif Display',serif;font-size:30px;font-weight:400}
+.wh p{font-size:13px;color:var(--muted);margin-top:4px}
+
+.mwrap{
+  margin:0 16px 16px;background:var(--card);
+  border-radius:20px;box-shadow:0 4px 24px rgba(169,79,141,.09);
+  border:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+table{width:100%;min-width:600px;border-collapse:collapse;table-layout:fixed}
+thead th, tbody td{border:1px solid var(--line);padding:5px 3px;height:52px;text-align:center;vertical-align:middle}
+thead th{background:#faf9fb}
+thead th b{display:block;font-size:12px;font-weight:800}
+thead th span{display:block;color:var(--muted);font-size:10px;margin-top:1px}
+
+.time-right-head{
+  position:sticky;right:0;z-index:3;
+  background:#ede5f5!important;
+  color:var(--brand);font-weight:800;font-size:11px;
+  min-width:58px;max-width:64px;
+  border-left:2px solid var(--brand-light)!important;
+}
+.time-right-cell{
+  position:sticky;right:0;z-index:2;
+  background:#f5f0fa;
+  color:var(--brand);font-weight:800;font-size:12px;
+  min-width:58px;max-width:64px;
+  border-left:2px solid var(--brand-light)!important;
+  text-align:center;
+}
+
+.slot{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;min-height:40px;border-radius:9px;
+  background:var(--green-bg);color:var(--green-dark);
+  font-weight:700;font-size:12px;cursor:pointer;
+  transition:background .1s,transform .1s;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.slot:active{background:#c6eddb;transform:scale(1.04)}
+.slot.booked{background:#ccc;color:#666;cursor:not-allowed}
+.slot.pending{background:#ff9800;color:#fff}
+.s{display:none}
+
+.slot.checked{
+  background:var(--green);
+  color:#fff;
+}
+.slot.checked .f{
+  display:none;
+}
+.slot.checked .s{
+  display:inline;
+}
+
+.confirm-wrap{margin:4px 16px 16px}
+.confirm-btn{
+  display:block;width:100%;background:var(--brand);color:#fff;
+  border:0;border-radius:14px;padding:17px;
+  font-size:17px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;
+  box-shadow:0 4px 20px rgba(169,79,141,.35);transition:all .15s;
+}
+.confirm-btn:active{transform:translateY(-1px)}
+
+.summary{margin:0 16px;background:var(--card);border-radius:20px;box-shadow:0 4px 24px rgba(169,79,141,.09);border:1px solid var(--line);padding:20px}
+.summary h2{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;margin-bottom:4px}
+.summary>.sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+.hint{background:#fff8e6;color:#7a5800;border:1px solid #ffd95c;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;margin-bottom:12px}
+.box{background:#faf9fb;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.box h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+ol{padding-left:18px;line-height:1.8;font-size:14px}
+.copy-section{background:#faf9fb;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.copy-section h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+.copy-ready-msg{background:var(--green-bg);border:1px solid #a8ddc0;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:10px;display:none}
+.copy-ready-msg span{display:block;font-size:12px;font-weight:400;color:#3a7a55;margin-top:3px}
+.copyarea{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0}
+.copy-btn{display:block;width:100%;background:var(--green);color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s}
+.copy-btn:active{background:var(--green-dark)}
+
+.code-input{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin:12px 16px;width:calc(100% - 32px);font-size:14px;font-family:'DM Sans',sans-serif}
+.msg-box{margin:0 16px;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:600;display:none}
+.msg-box.success{background:var(--green-bg);color:var(--green-dark);border:1px solid #a8ddc0;display:block}
+.msg-box.error{background:#ffebee;color:#c62828;border:1px solid #ef5350;display:block}
+
+@media(max-width:600px){
+  .hdr-title h1{font-size:18px}
+  .weeks{grid-template-columns:repeat(2,1fr)}
+  .wh h2{font-size:26px}
+  .time-right-head,.time-right-cell{min-width:50px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<input type="radio" name="week" id="tab-w1" class="wr" checked>
+<input type="radio" name="week" id="tab-w2" class="wr" >
+<input type="radio" name="week" id="tab-w3" class="wr" >
+<input type="radio" name="week" id="tab-w4" class="wr" >
+<input type="checkbox" id="s202606291000" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291100" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291200" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291400" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291500" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291600" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291700" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291800" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606291900" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606292030" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606292130" class="chk bc" data-date="2026-06-29" data-dl="29/6" data-day="Monday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301000" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301100" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301200" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301400" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301500" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301600" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301700" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301800" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606301900" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606302030" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202606302130" class="chk bc" data-date="2026-06-30" data-dl="30/6" data-day="Tuesday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011000" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011100" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011200" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011400" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011500" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011600" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011700" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011800" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607011900" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607012030" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607012130" class="chk bc" data-date="2026-07-01" data-dl="1/7" data-day="Wednesday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021000" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021100" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021200" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021400" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021500" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021600" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021700" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021800" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607021900" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607022030" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607022130" class="chk bc" data-date="2026-07-02" data-dl="2/7" data-day="Thursday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031000" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031100" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031200" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031400" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031500" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031600" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031700" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031800" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607031900" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607032030" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607032130" class="chk bc" data-date="2026-07-03" data-dl="3/7" data-day="Friday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041000" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041100" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041200" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041400" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041500" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041600" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041700" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041800" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607041900" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607042030" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607042130" class="chk bc" data-date="2026-07-04" data-dl="4/7" data-day="Saturday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051000" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="10:00" data-tl="10am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051100" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="11:00" data-tl="11am" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051200" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="12:00" data-tl="12 noon" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051400" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="14:00" data-tl="2pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051500" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="15:00" data-tl="3pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051600" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="16:00" data-tl="4pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051700" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="17:00" data-tl="5pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051800" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="18:00" data-tl="6pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607051900" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="19:00" data-tl="7pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607052030" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="20:30" data-tl="8:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607052130" class="chk bc" data-date="2026-07-05" data-dl="5/7" data-day="Sunday" data-time="21:30" data-tl="9:30pm" data-week="29/6 – 5/7">
+<input type="checkbox" id="s202607061000" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061100" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061200" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061400" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061500" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061600" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061700" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061800" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607061900" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607062030" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607062130" class="chk bc" data-date="2026-07-06" data-dl="6/7" data-day="Monday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071000" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071100" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071200" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071400" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071500" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071600" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071700" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071800" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607071900" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607072030" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607072130" class="chk bc" data-date="2026-07-07" data-dl="7/7" data-day="Tuesday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081000" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081100" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081200" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081400" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081500" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081600" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081700" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081800" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607081900" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607082030" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607082130" class="chk bc" data-date="2026-07-08" data-dl="8/7" data-day="Wednesday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091000" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091100" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091200" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091400" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091500" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091600" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091700" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091800" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607091900" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607092030" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607092130" class="chk bc" data-date="2026-07-09" data-dl="9/7" data-day="Thursday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101000" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101100" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101200" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101400" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101500" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101600" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101700" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101800" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607101900" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607102030" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607102130" class="chk bc" data-date="2026-07-10" data-dl="10/7" data-day="Friday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111000" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111100" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111200" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111400" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111500" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111600" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111700" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111800" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607111900" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607112030" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607112130" class="chk bc" data-date="2026-07-11" data-dl="11/7" data-day="Saturday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121000" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="10:00" data-tl="10am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121100" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="11:00" data-tl="11am" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121200" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="12:00" data-tl="12 noon" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121400" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="14:00" data-tl="2pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121500" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="15:00" data-tl="3pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121600" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="16:00" data-tl="4pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121700" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="17:00" data-tl="5pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121800" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="18:00" data-tl="6pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607121900" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="19:00" data-tl="7pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607122030" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="20:30" data-tl="8:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607122130" class="chk bc" data-date="2026-07-12" data-dl="12/7" data-day="Sunday" data-time="21:30" data-tl="9:30pm" data-week="6/7 – 12/7">
+<input type="checkbox" id="s202607131000" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131100" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131200" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131400" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131500" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131600" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131700" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131800" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607131900" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607132030" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607132130" class="chk bc" data-date="2026-07-13" data-dl="13/7" data-day="Monday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141000" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141100" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141200" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141400" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141500" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141600" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141700" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141800" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607141900" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607142030" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607142130" class="chk bc" data-date="2026-07-14" data-dl="14/7" data-day="Tuesday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151000" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151100" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151200" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151400" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151500" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151600" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151700" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151800" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607151900" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607152030" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607152130" class="chk bc" data-date="2026-07-15" data-dl="15/7" data-day="Wednesday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161000" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161100" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161200" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161400" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161500" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161600" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161700" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161800" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607161900" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607162030" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607162130" class="chk bc" data-date="2026-07-16" data-dl="16/7" data-day="Thursday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171000" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171100" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171200" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171400" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171500" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171600" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171700" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171800" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607171900" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607172030" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607172130" class="chk bc" data-date="2026-07-17" data-dl="17/7" data-day="Friday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181000" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181100" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181200" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181400" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181500" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181600" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181700" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181800" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607181900" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607182030" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607182130" class="chk bc" data-date="2026-07-18" data-dl="18/7" data-day="Saturday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191000" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="10:00" data-tl="10am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191100" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="11:00" data-tl="11am" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191200" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="12:00" data-tl="12 noon" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191400" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="14:00" data-tl="2pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191500" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="15:00" data-tl="3pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191600" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="16:00" data-tl="4pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191700" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="17:00" data-tl="5pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191800" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="18:00" data-tl="6pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607191900" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="19:00" data-tl="7pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607192030" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="20:30" data-tl="8:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607192130" class="chk bc" data-date="2026-07-19" data-dl="19/7" data-day="Sunday" data-time="21:30" data-tl="9:30pm" data-week="13/7 – 19/7">
+<input type="checkbox" id="s202607201000" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201100" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201200" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201400" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201500" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201600" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201700" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201800" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607201900" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607202030" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607202130" class="chk bc" data-date="2026-07-20" data-dl="20/7" data-day="Monday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211000" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211100" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211200" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211400" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211500" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211600" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211700" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211800" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607211900" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607212030" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607212130" class="chk bc" data-date="2026-07-21" data-dl="21/7" data-day="Tuesday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221000" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221100" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221200" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221400" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221500" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221600" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221700" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221800" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607221900" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607222030" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607222130" class="chk bc" data-date="2026-07-22" data-dl="22/7" data-day="Wednesday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231000" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231100" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231200" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231400" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231500" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231600" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231700" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231800" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607231900" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607232030" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607232130" class="chk bc" data-date="2026-07-23" data-dl="23/7" data-day="Thursday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241000" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241100" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241200" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241400" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241500" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241600" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241700" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241800" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607241900" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607242030" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607242130" class="chk bc" data-date="2026-07-24" data-dl="24/7" data-day="Friday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251000" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251100" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251200" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251400" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251500" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251600" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251700" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251800" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607251900" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607252030" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607252130" class="chk bc" data-date="2026-07-25" data-dl="25/7" data-day="Saturday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261000" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="10:00" data-tl="10am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261100" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="11:00" data-tl="11am" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261200" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="12:00" data-tl="12 noon" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261400" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="14:00" data-tl="2pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261500" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="15:00" data-tl="3pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261600" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="16:00" data-tl="4pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261700" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="17:00" data-tl="5pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261800" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="18:00" data-tl="6pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607261900" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="19:00" data-tl="7pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607262030" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="20:30" data-tl="8:30pm" data-week="20/7 – 26/7">
+<input type="checkbox" id="s202607262130" class="chk bc" data-date="2026-07-26" data-dl="26/7" data-day="Sunday" data-time="21:30" data-tl="9:30pm" data-week="20/7 – 26/7">
+
+<div class="app">
+<header>
+  <div class="hdr-top">
+    <div class="hdr-title">
+      <h1>Dr Jon Summer</h1>
+      <p>Lesson Booking Request</p>
+    </div>
+    <div class="global-counter zero" id="globalCounter">0 selected</div>
+  </div>
+  <div class="weeks"><label for="tab-w1" class="wtab tab-w1" onclick="scrollToPanel('w1')"><b>Week 1</b><span>29/6 – 5/7</span><span class="wk-count" id="cnt-w1"></span></label>
+<label for="tab-w2" class="wtab tab-w2" onclick="scrollToPanel('w2')"><b>Week 2</b><span>6/7 – 12/7</span><span class="wk-count" id="cnt-w2"></span></label>
+<label for="tab-w3" class="wtab tab-w3" onclick="scrollToPanel('w3')"><b>Week 3</b><span>13/7 – 19/7</span><span class="wk-count" id="cnt-w3"></span></label>
+<label for="tab-w4" class="wtab tab-w4" onclick="scrollToPanel('w4')"><b>Week 4</b><span>20/7 – 26/7</span><span class="wk-count" id="cnt-w4"></span></label></div>
+  <div class="controls-row">
+    <button class="clear-btn" onclick="clearAll()">✕ Clear all</button>
+    <select class="tzselect" id="tzSelect" onchange="onTzChange()">
+      <option value="Europe/London" data-name="UK time">🇬🇧 UK time (BST)</option>
+      <option value="Asia/Dubai" data-name="Dubai">🇦🇪 Dubai (UTC+4)</option>
+      <option value="Asia/Bangkok" data-name="Thailand">🇹🇭 Thailand (UTC+7)</option>
+      <option value="Asia/Shanghai" data-name="China &amp; HK">🇨🇳🇭🇰 China &amp; HK (UTC+8)</option>
+      <option value="Asia/Tokyo" data-name="Japan">🇯🇵 Japan (UTC+9)</option>
+      <option value="America/New_York" data-name="New York">🇺🇸 New York (EDT)</option>
+    </select>
+  </div>
+</header>
+
+<section class="panel panel-w1" id="panel-w1"><div class="wh"><h2>29/6 – 5/7</h2><p>Tap slots to select</p></div><div class="mwrap"><table><thead><tr><th><b>29/6</b><span>Monday</span></th><th><b>30/6</b><span>Tuesday</span></th><th><b>1/7</b><span>Wednesday</span></th><th><b>2/7</b><span>Thursday</span></th><th><b>3/7</b><span>Friday</span></th><th><b>4/7</b><span>Saturday</span></th><th><b>5/7</b><span>Sunday</span></th><th class="time-right-head">Time</th></tr></thead><tbody><tr><td><label for="s202606291000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="10:00">10am</td></tr><tr><td><label for="s202606291100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="11:00">11am</td></tr><tr><td><label for="s202606291200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="12:00">12 noon</td></tr><tr><td><label for="s202606291400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="14:00">2pm</td></tr><tr><td><label for="s202606291500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="15:00">3pm</td></tr><tr><td><label for="s202606291600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="16:00">4pm</td></tr><tr><td><label for="s202606291700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="17:00">5pm</td></tr><tr><td><label for="s202606291800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="18:00">6pm</td></tr><tr><td><label for="s202606291900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606301900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607011900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607021900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607031900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607041900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607051900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="19:00">7pm</td></tr><tr><td><label for="s202606292030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606302030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607012030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607022030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607032030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607042030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607052030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="20:30">8:30pm</td></tr><tr><td><label for="s202606292130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202606302130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607012130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607022130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607032130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607042130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607052130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="21:30">9:30pm</td></tr></tbody></table></div></section>
+<section class="panel panel-w2" id="panel-w2"><div class="wh"><h2>6/7 – 12/7</h2><p>Tap slots to select</p></div><div class="mwrap"><table><thead><tr><th><b>6/7</b><span>Monday</span></th><th><b>7/7</b><span>Tuesday</span></th><th><b>8/7</b><span>Wednesday</span></th><th><b>9/7</b><span>Thursday</span></th><th><b>10/7</b><span>Friday</span></th><th><b>11/7</b><span>Saturday</span></th><th><b>12/7</b><span>Sunday</span></th><th class="time-right-head">Time</th></tr></thead><tbody><tr><td><label for="s202607061000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="10:00">10am</td></tr><tr><td><label for="s202607061100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="11:00">11am</td></tr><tr><td><label for="s202607061200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="12:00">12 noon</td></tr><tr><td><label for="s202607061400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="14:00">2pm</td></tr><tr><td><label for="s202607061500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="15:00">3pm</td></tr><tr><td><label for="s202607061600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="16:00">4pm</td></tr><tr><td><label for="s202607061700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="17:00">5pm</td></tr><tr><td><label for="s202607061800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="18:00">6pm</td></tr><tr><td><label for="s202607061900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607071900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607081900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607091900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607101900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607111900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607121900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="19:00">7pm</td></tr><tr><td><label for="s202607062030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607072030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607082030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607092030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607102030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607112030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607122030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="20:30">8:30pm</td></tr><tr><td><label for="s202607062130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607072130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607082130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607092130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607102130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607112130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607122130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="21:30">9:30pm</td></tr></tbody></table></div></section>
+<section class="panel panel-w3" id="panel-w3"><div class="wh"><h2>13/7 – 19/7</h2><p>Tap slots to select</p></div><div class="mwrap"><table><thead><tr><th><b>13/7</b><span>Monday</span></th><th><b>14/7</b><span>Tuesday</span></th><th><b>15/7</b><span>Wednesday</span></th><th><b>16/7</b><span>Thursday</span></th><th><b>17/7</b><span>Friday</span></th><th><b>18/7</b><span>Saturday</span></th><th><b>19/7</b><span>Sunday</span></th><th class="time-right-head">Time</th></tr></thead><tbody><tr><td><label for="s202607131000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="10:00">10am</td></tr><tr><td><label for="s202607131100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="11:00">11am</td></tr><tr><td><label for="s202607131200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="12:00">12 noon</td></tr><tr><td><label for="s202607131400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="14:00">2pm</td></tr><tr><td><label for="s202607131500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="15:00">3pm</td></tr><tr><td><label for="s202607131600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="16:00">4pm</td></tr><tr><td><label for="s202607131700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="17:00">5pm</td></tr><tr><td><label for="s202607131800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="18:00">6pm</td></tr><tr><td><label for="s202607131900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607141900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607151900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607161900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607171900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607181900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607191900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="19:00">7pm</td></tr><tr><td><label for="s202607132030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607142030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607152030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607162030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607172030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607182030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607192030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="20:30">8:30pm</td></tr><tr><td><label for="s202607132130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607142130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607152130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607162130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607172130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607182130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607192130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="21:30">9:30pm</td></tr></tbody></table></div></section>
+<section class="panel panel-w4" id="panel-w4"><div class="wh"><h2>20/7 – 26/7</h2><p>Tap slots to select</p></div><div class="mwrap"><table><thead><tr><th><b>20/7</b><span>Monday</span></th><th><b>21/7</b><span>Tuesday</span></th><th><b>22/7</b><span>Wednesday</span></th><th><b>23/7</b><span>Thursday</span></th><th><b>24/7</b><span>Friday</span></th><th><b>25/7</b><span>Saturday</span></th><th><b>26/7</b><span>Sunday</span></th><th class="time-right-head">Time</th></tr></thead><tbody><tr><td><label for="s202607201000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261000" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="10:00">10am</td></tr><tr><td><label for="s202607201100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261100" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="11:00">11am</td></tr><tr><td><label for="s202607201200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261200" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="12:00">12 noon</td></tr><tr><td><label for="s202607201400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261400" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="14:00">2pm</td></tr><tr><td><label for="s202607201500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261500" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="15:00">3pm</td></tr><tr><td><label for="s202607201600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261600" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="16:00">4pm</td></tr><tr><td><label for="s202607201700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261700" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="17:00">5pm</td></tr><tr><td><label for="s202607201800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261800" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="18:00">6pm</td></tr><tr><td><label for="s202607201900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607211900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607221900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607231900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607241900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607251900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607261900" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="19:00">7pm</td></tr><tr><td><label for="s202607202030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607212030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607222030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607232030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607242030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607252030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607262030" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="20:30">8:30pm</td></tr><tr><td><label for="s202607202130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607212130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607222130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607232130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607242130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607252130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td><label for="s202607262130" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td><td class="time-right-cell local-time-cell" data-uktime="21:30">9:30pm</td></tr></tbody></table></div></section>
+
+<input type="text" id="codeInput" class="code-input" maxlength="4" placeholder="Enter your 4-digit code">
+<div class="msg-box" id="msgBox"></div>
+
+<div class="confirm-wrap">
+  <button class="confirm-btn" onclick="doConfirm()">✓ Confirm booking choices</button>
+</div>
+
+<section class="summary" id="summary">
+  <h2>Booking Summary</h2>
+  <p class="sub">Select slots above, enter code, confirm, then copy and send to Dr Jon.</p>
+  <div class="hint" id="hint">Press "Confirm booking choices" to generate your summary.</div>
+  <div class="box" id="ukBox" style="display:none">
+    <h3>🇬🇧 UK time slots requested</h3>
+    <ol id="ukList"></ol>
+  </div>
+  <div class="box" id="localBox" style="display:none">
+    <h3 id="localTitle">Student timezone slots</h3>
+    <ol id="localList"></ol>
+  </div>
+  <div class="copy-section" id="copySection" style="display:none">
+    <h3>📋 Booking request</h3>
+    <div class="copy-ready-msg" id="copyReadyMsg">
+      ✅ Copied to clipboard!
+      <span>Paste into WhatsApp or message to send to Dr Jon.</span>
+    </div>
+    <textarea class="copyarea" id="copyText" readonly></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyTextNow()">📋 Copy booking request</button>
+  </div>
+</section>
+</div>
+
+<script>
+var ALL_CHECKS = Array.from(document.querySelectorAll('.bc'));
+var WEEK_IDS = ['w1','w2','w3','w4'];
+var WEEK_STARTS = {'w1':'29/6','w2':'6/7','w3':'13/7','w4':'20/7'};
+
+// Generate valid codes
+var VALID_CODES=[];
+var letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+letters.forEach(function(first){
+  letters.forEach(function(second){
+    for(var i=1;i<=26;i++){
+      VALID_CODES.push(first+second.toLowerCase()+String(i).padStart(2,'0'));
+    }
+  });
+});
+
+// Load bookings from localStorage
+var BOOKINGS=JSON.parse(localStorage.getItem('bookings'))||[[]];
+function loadBookingStatus(){
+  ALL_CHECKS.forEach(function(c){
+    var slotId=c.id;
+    var booked=BOOKINGS.some(function(b){return b.slotId===slotId && b.status==='approved'});
+    var pending=BOOKINGS.some(function(b){return b.slotId===slotId && b.status==='pending'});
+    var lbl=document.querySelector('label[for="'+slotId+'"]');
+    if(lbl){
+      lbl.classList.remove('checked','booked','pending');
+      if(booked)lbl.classList.add('booked');
+      else if(pending)lbl.classList.add('pending');
+    }
+  });
+}
+
+// Setup slot clicks
+ALL_CHECKS.forEach(function(c){
+  c.addEventListener('change', function(){
+    var lbl = document.querySelector('label[for="'+this.id+'"]');
+    if(this.checked){
+      lbl.classList.add('checked');
+    } else {
+      lbl.classList.remove('checked');
+    }
+    updateCounters();
+  });
+  var lbl = document.querySelector('label[for="'+c.id+'"]');
+  if(lbl){
+    lbl.onclick = function(e){
+      if(lbl.classList.contains('booked'))return;
+      e.preventDefault();
+      c.checked = !c.checked;
+      var evt = new Event('change', { bubbles: true });
+      c.dispatchEvent(evt);
+    };
+  }
+});
+
+function updateCounters(){
+  var total = ALL_CHECKS.filter(function(c){return c.checked}).length;
+  var gc = document.getElementById('globalCounter');
+  gc.textContent = total+(total===1?' slot':' slots')+' selected';
+  gc.className = 'global-counter'+(total===0?' zero':'');
+  WEEK_IDS.forEach(function(wid){
+    var n = ALL_CHECKS.filter(function(c){
+      return c.checked && c.dataset.week && c.dataset.week.indexOf(WEEK_STARTS[wid])===0;
+    }).length;
+    var el=document.getElementById('cnt-'+wid);
+    if(el){ el.textContent=n; el.className='wk-count'+(n>0?' show':''); }
+  });
+}
+
+function clearAll(){
+  ALL_CHECKS.forEach(function(c){
+    c.checked=false;
+    var lbl=document.querySelector('label[for="'+c.id+'"]');
+    if(lbl) lbl.classList.remove('checked');
+  });
+  updateCounters();
+  resetSummary();
+}
+
+function resetSummary(){
+  document.getElementById('hint').style.display='block';
+  document.getElementById('hint').textContent='Press "Confirm booking choices" to generate your summary.';
+  document.getElementById('ukBox').style.display='none';
+  document.getElementById('localBox').style.display='none';
+  document.getElementById('copySection').style.display='none';
+  document.getElementById('copyReadyMsg').style.display='none';
+}
+
+function scrollToPanel(wid){
+  setTimeout(function(){
+    var el=document.getElementById('panel-'+wid);
+    if(!el) return;
+    var hh=document.querySelector('header').offsetHeight;
+    var top=el.getBoundingClientRect().top+window.scrollY-hh-8;
+    window.scrollTo({top:top,behavior:'smooth'});
+  },60);
+}
+
+function onTzChange(){
+  var tzSel=document.getElementById('tzSelect');
+  var tz=tzSel.value;
+  var isUK=(tz==='Europe/London');
+  var tzName=tzSel.options[tzSel.selectedIndex].dataset.name;
+
+  document.querySelectorAll('.local-time-cell').forEach(function(cell){
+    var ukTime=cell.dataset.uktime;
+    if(isUK){
+      cell.textContent=ukTimeLabel(ukTime);
+    } else {
+      try{
+        var dt=new Date('2026-07-01T'+ukTime+':00+01:00');
+        cell.textContent=new Intl.DateTimeFormat('en-GB',{
+          timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false
+        }).format(dt);
+      }catch(e){ cell.textContent=ukTime; }
+    }
+  });
+
+  document.querySelectorAll('.time-right-head').forEach(function(th){
+    th.textContent = isUK ? 'UK time' : tzName.split(' ')[0];
+  });
+}
+
+var UK_LABELS = {'10:00':'10am','11:00':'11am','12:00':'12 noon','14:00':'2pm','15:00':'3pm','16:00':'4pm','17:00':'5pm','18:00':'6pm','19:00':'7pm','20:30':'8:30pm','21:30':'9:30pm'};
+function ukTimeLabel(t){ return UK_LABELS[t]||t; }
+
+function selectedSlots(){
+  var arr=[];
+  ALL_CHECKS.filter(function(c){return c.checked}).forEach(function(c){
+    arr.push({date:c.dataset.date,dl:c.dataset.dl,day:c.dataset.day,time:c.dataset.time,tl:c.dataset.tl,week:c.dataset.week});
+  });
+  arr.sort(function(a,b){return(a.date+a.time).localeCompare(b.date+b.time)});
+  return arr;
+}
+
+function localTimeStr(dateISO,timeStr,tz){
+  try{
+    var dt=new Date(dateISO+'T'+timeStr+':00+01:00');
+    return new Intl.DateTimeFormat('en-GB',{
+      timeZone:tz,weekday:'long',day:'numeric',month:'short',
+      hour:'2-digit',minute:'2-digit',hour12:false
+    }).format(dt);
+  }catch(e){return dateISO+' '+timeStr;}
+}
+
+function addLi(id,text){
+  var li=document.createElement('li');li.textContent=text;
+  document.getElementById(id).appendChild(li);
+}
+
+function buildText(){
+  var slots=selectedSlots();
+  var tzSel=document.getElementById('tzSelect');
+  var tz=tzSel.value;
+  var tzName=tzSel.options[tzSel.selectedIndex].dataset.name;
+  var code=document.getElementById('codeInput').value;
+  var lines=[];
+  lines.push('*Lesson booking request*');
+  lines.push('');
+  lines.push('Official lesson time: UK time / Europe-London');
+  lines.push('Total requested lessons: '+slots.length);
+  lines.push('Booking code: '+code);
+  lines.push('');
+  lines.push('*UK time slots requested:*');
+  slots.forEach(function(s,i){
+    lines.push((i+1)+'. '+s.day+' '+s.dl+' ('+s.week+') — '+s.tl+' UK time');
+  });
+  if(tz!=='Europe/London'){
+    lines.push('');
+    lines.push('*Student timezone slots ('+tzName+'):*');
+    slots.forEach(function(x,j){
+      lines.push((j+1)+'. '+localTimeStr(x.date,x.time,tz)+' ('+tzName+')');
+    });
+  }
+  lines.push('');
+  lines.push('Please confirm whether these lesson times are available.');
+  return lines.join('\n');
+}
+
+function doConfirm(){
+  var code=document.getElementById('codeInput').value.toUpperCase();
+  
+  if(code.length!==4){
+    showMsg('❌ Please enter a 4-digit code','error');
+    return;
+  }
+  
+  if(!VALID_CODES.includes(code)){
+    showMsg('❌ Invalid code','error');
+    return;
+  }
+  
+  var slots=selectedSlots();
+  var tzSel=document.getElementById('tzSelect');
+  var tz=tzSel.value;
+  var tzName=tzSel.options[tzSel.selectedIndex].dataset.name;
+  document.getElementById('ukList').innerHTML='';
+  document.getElementById('localList').innerHTML='';
+  document.getElementById('copyReadyMsg').style.display='none';
+  document.getElementById('copyBtn').textContent='📋 Copy booking request';
+
+  if(slots.length===0){
+    document.getElementById('hint').style.display='block';
+    document.getElementById('hint').textContent='Please select at least one slot first.';
+    document.getElementById('ukBox').style.display='none';
+    document.getElementById('localBox').style.display='none';
+    document.getElementById('copySection').style.display='none';
+    document.getElementById('summary').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  document.getElementById('hint').style.display='none';
+  document.getElementById('ukBox').style.display='block';
+  slots.forEach(function(s,i){
+    addLi('ukList',s.day+' '+s.dl+' ('+s.week+') — '+s.tl+' UK time');
+  });
+  if(tz!=='Europe/London'){
+    document.getElementById('localBox').style.display='block';
+    document.getElementById('localTitle').textContent='🌏 Student timezone — '+tzName;
+    slots.forEach(function(x,j){
+      addLi('localList',localTimeStr(x.date,x.time,tz)+' ('+tzName+')');
+    });
+  } else {
+    document.getElementById('localBox').style.display='none';
+  }
+  document.getElementById('copyText').value=buildText();
+  document.getElementById('copySection').style.display='block';
+  document.getElementById('summary').scrollIntoView({behavior:'smooth'});
+}
+
+function copyTextNow(){
+  var t=document.getElementById('copyText');
+  t.value=buildText();
+  if(!t.value) return;
+  t.style.position='fixed';
+  t.style.top='0';t.style.left='0';
+  t.style.width='2em';t.style.height='2em';
+  t.style.opacity='0';
+  document.body.appendChild(t);
+  t.focus();t.select();t.setSelectionRange(0,99999);
+
+  function afterCopy(){
+    t.style.position='absolute';
+    t.style.left='-9999px';t.style.top='0';
+    t.style.width='1px';t.style.height='1px';
+    document.getElementById('copyReadyMsg').style.display='block';
+    document.getElementById('copyBtn').textContent='✅ Copied!';
+  }
+
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(t.value).then(afterCopy).catch(function(){
+      document.execCommand('copy');
+      afterCopy();
+    });
+  } else {
+    document.execCommand('copy');
+    afterCopy();
+  }
+}
+
+function showMsg(text,cls){
+  var el=document.getElementById('msgBox');
+  el.textContent=text;
+  el.className='msg-box '+cls;
+  setTimeout(function(){el.className='msg-box';},5000);
+}
+
+loadBookingStatus();
+updateCounters();
+onTzChange();
+</script>
+</body>
+</html>
