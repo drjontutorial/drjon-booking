@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr Jon Summer Lesson Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, set, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAS34ly4yLmiw8hBWN62wg5fi8IhzPwZqI",
+  authDomain: "drjonbooking.firebaseapp.com",
+  databaseURL: "https://drjonbooking-default-rtdb.firebaseio.com",
+  projectId: "drjonbooking",
+  storageBucket: "drjonbooking.firebasestorage.app",
+  messagingSenderId: "211688494004",
+  appId: "1:211688494004:web:cae320e93861f53a59d8e1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window.firebaseDB = { ref, onValue, update, set, remove, db };
+</script>
+
+<style>
+:root{
+  --brand:#1e40af;--brand-light:#e0e7ff;--bg:#f8fafc;--card:#fff;
+  --green:#0891b2;--green-bg:#e0f2fe;--green-dark:#164e63;
+  --line:#e2e8f0;--ink:#0f172a;--muted:#64748b;
+  --warning:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);padding:20px}
+.container{max-width:1200px;margin:0 auto}
+h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--brand);margin-bottom:20px}
+
+.login-section{background:var(--card);padding:30px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:400px;margin:0 auto}
+.login-section input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;margin-bottom:12px;font-family:'DM Sans',sans-serif}
+.login-section button{width:100%;padding:14px;background:var(--brand);color:#fff;border:0;border-radius:10px;font-weight:700;cursor:pointer;font-size:16px;font-family:'DM Sans',sans-serif}
+
+.admin-panel{display:none}
+.header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;background:var(--card);padding:16px 20px;border-radius:12px;border:1px solid var(--line)}
+.logout-btn{background:var(--warning);color:#fff;border:0;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{border:1.5px solid var(--line);background:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px}
+.tab-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.stat-card .number{font-size:28px;font-weight:800;color:var(--brand);margin-bottom:4px}
+.stat-card .label{font-size:12px;color:var(--muted);font-weight:600}
+
+.controls-export{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-export{background:var(--green);color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+.btn-import{background:#9333ea;color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+
+#importFile{display:none}
+
+.toggle-history{background:var(--brand);color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;margin-bottom:16px;font-family:'DM Sans',sans-serif}
+
+.new-req-group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+.new-req-group .header-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:2px solid var(--brand);padding-bottom:12px;flex-wrap:wrap;gap:12px}
+.new-req-group .code{font-size:18px;font-weight:800;color:var(--brand)}
+.new-req-group .info{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.new-req-group .info span{display:block}
+.status-badge{display:inline-block;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase}
+.status-badge.pending{background:#fef08a;color:#92400e}
+.status-badge.approved{background:#d1fae5;color:#065f46}
+.status-badge.rejected{background:#fee2e2;color:#991b1b}
+
+.booking-item{background:#f8fafc;border-radius:10px;padding:12px;margin:8px 0;border-left:3px solid var(--brand)}
+.booking-item .slot-info{font-size:13px;color:var(--ink);margin-bottom:8px;font-weight:600}
+.booking-item .slot-status{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-right:8px;text-transform:capitalize}
+.booking-item .slot-status.pending{background:#fef08a;color:#92400e}
+.booking-item .slot-status.approved{background:#d1fae5;color:#065f46}
+.booking-item .slot-status.rejected{background:#fee2e2;color:#991b1b}
+
+.booking-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.booking-actions button{padding:6px 12px;border:0;border-radius:5px;cursor:pointer;font-weight:700;font-size:11px;font-family:'DM Sans',sans-serif}
+.btn-book-approve{background:var(--green);color:#fff}
+.btn-book-reject{background:var(--warning);color:#fff}
+.btn-book-release{background:#64748b;color:#fff}
+.btn-book-delete{background:#ff6b6b;color:#fff}
+
+.selection-box{background:#f1f5f9;border-radius:12px;padding:16px;margin:16px 0}
+.selection-box h3{font-family:'DM Serif Display',serif;font-size:18px;color:var(--brand);margin-bottom:4px;font-weight:400}
+.selection-box .sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.selection-box ol{padding-left:20px;line-height:1.8;font-size:13px;color:var(--ink)}
+
+.new-req-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.new-req-actions button{padding:10px 16px;border:0;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+.btn-approve{background:var(--green);color:#fff}
+.btn-reject{background:var(--warning);color:#fff}
+
+.all-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-danger{background:var(--warning);color:#fff;border:0;padding:12px 20px;border-radius:10px;cursor:pointer;font-weight:700;font-family:'DM Sans',sans-serif}
+
+.booking-table{background:var(--card);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid var(--line);overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead th{border:1px solid var(--line);padding:12px 8px;background:#f1f5f9;font-weight:800;font-size:12px;height:60px;vertical-align:middle}
+thead th span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+tbody td{border:1px solid var(--line);padding:4px;text-align:center;height:60px;vertical-align:middle}
+
+th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
+
+.time-header{position:sticky;right:0;z-index:3;background:var(--brand-light)!important;color:var(--brand);font-weight:800;font-size:11px;border-left:2px solid var(--brand)!important;min-width:60px}
+.time-cell{position:sticky;right:0;z-index:2;background:#f0f4ff;color:var(--brand);font-weight:800;font-size:12px;border-left:2px solid var(--brand)!important;min-width:60px}
+
+.slot-btn{display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--green-bg);color:var(--green-dark);font-weight:700;font-size:11px;border-radius:6px;border:none;cursor:pointer;transition:all .15s;width:calc(100% - 8px);margin:4px;font-family:'DM Sans',sans-serif}
+.slot-btn:hover:not(.booked):not(.unavailable){background:#cffafe;transform:scale(1.05)}
+.slot-btn.booked{background:#000;color:#fff;cursor:pointer;font-weight:600}
+.slot-btn.pending{background:#fef08a;color:#92400e;cursor:pointer}
+.slot-btn.unavailable{background:#000;color:#fff;cursor:pointer}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;overflow-y:auto;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:30px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h2{margin-bottom:16px;color:var(--brand)}
+.modal p{color:var(--muted);margin-bottom:12px}
+.modal input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;margin-bottom:16px;font-family:'DM Sans',sans-serif}
+.modal-buttons{display:flex;gap:12px;margin-top:24px}
+.modal-buttons button{flex:1;padding:12px;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:'DM Sans',sans-serif}
+.btn-confirm{background:var(--green);color:#fff}
+.btn-cancel{background:var(--line);color:var(--ink)}
+
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:16px}
+
+@media(max-width:600px){
+  table{font-size:11px}
+  thead th{padding:8px 4px;height:50px}
+  tbody td{height:50px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="login-section" id="loginSection">
+    <h1 style="text-align:center;margin-bottom:24px">Admin Login</h1>
+    <input type="password" id="pwdInput" placeholder="Enter admin password">
+    <button onclick="adminLogin()">Login</button>
+  </div>
+
+  <div class="admin-panel" id="adminPanel">
+    <div class="header-bar">
+      <h1>Dr Jon Summer Lesson Booking</h1>
+      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('new')">New Requests</button>
+      <button class="tab-btn" onclick="switchTab('all')">All Requests</button>
+    </div>
+
+    <div id="newTab">
+      <div class="stats" id="stats"></div>
+      <button class="toggle-history" onclick="toggleHistory()">📋 Show Old Requests</button>
+      <div id="newList"></div>
+      <div id="historyList" style="display:none;margin-top:20px"></div>
+    </div>
+
+    <div id="allTab" style="display:none">
+      <div class="controls-export">
+        <button class="btn-export" onclick="exportBackup()">💾 Download Backup</button>
+        <button class="btn-import" onclick="triggerImport()">📤 Upload Backup</button>
+        <input type="file" id="importFile" accept=".json" onchange="importBackup()">
+      </div>
+      <div class="all-controls">
+        <button class="btn-danger" onclick="confirmFreeAll()">Free All Slots & Clear Requests</button>
+      </div>
+      <div class="booking-table">
+        <table id="requestTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h2>Confirm Action</h2>
+    <p id="confirmMsg"></p>
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="confirmAction()">Yes</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmClearModal">
+  <div class="modal">
+    <h2>Free All Slots & Clear All Requests?</h2>
+    <p>Type password to confirm:</p>
+    <input type="password" id="confirmPwd" placeholder="Enter password">
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="freeAllSlots()">Yes, Clear All</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PWD = "drjon223";
+let db = null;
+let allBookings = {};
+let unavailableSlots = {};
+let lastLoginTime = Date.now();
+let pendingAction = null;
+let showingHistory = false;
+
+const weeks = [
+  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
+  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
+  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
+  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]}
+];
+
+const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+const times = [["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
+
+function sid(diso, tstr) {
+  return "s" + diso.replace(/-/g,"") + tstr.replace(/:/g,"");
+}
+
+function adminLogin() {
+  const pwd = document.getElementById('pwdInput').value;
+  if(pwd !== ADMIN_PWD) {
+    alert('Wrong password');
+    return;
+  }
+  lastLoginTime = Date.now();
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadData();
+}
+
+function adminLogout() {
+  document.getElementById('loginSection').style.display = 'block';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('pwdInput').value = '';
+  showingHistory = false;
+  document.getElementById('historyList').style.display = 'none';
+}
+
+function loadData() {
+  if(!window.firebaseDB) {setTimeout(loadData,100);return;}
+  const {ref,onValue,db:fbdb} = window.firebaseDB;
+  db = fbdb;
+  
+  onValue(ref(db,'bookings'), snap => {
+    allBookings = snap.val() || {};
+    renderNewRequests();
+    renderAllRequestsTable();
+    updateStats();
+  });
+  
+  onValue(ref(db,'unavailable'), snap => {
+    unavailableSlots = snap.val() || {};
+    renderAllRequestsTable();
+  });
+}
+
+function switchTab(tab) {
+  document.getElementById('newTab').style.display = tab==='new'?'block':'none';
+  document.getElementById('allTab').style.display = tab==='all'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function toggleHistory() {
+  showingHistory = !showingHistory;
+  if(showingHistory) {
+    renderHistory();
+    document.getElementById('historyList').style.display = 'block';
+    event.target.textContent = '📋 Hide Old Requests';
+  } else {
+    document.getElementById('historyList').style.display = 'none';
+    event.target.textContent = '📋 Show Old Requests';
+  }
+}
+
+function renderNewRequests() {
+  const newReqs = Object.entries(allBookings).filter(([k,b]) => b.ts > lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  
+  if(newReqs.length === 0) {
+    document.getElementById('newList').innerHTML = '<div class="empty">No new requests</div>';
+    return;
+  }
+  
+  const grouped = {};
+  newReqs.forEach(([key,b]) => {
+    if(!grouped[b.code]) {
+      grouped[b.code] = {code: b.code, bookings: [], ts: b.ts, userIP: b.userIP};
+    }
+    grouped[b.code].bookings.push({key, ...b});
+  });
+  
+  let html = '';
+  Object.values(grouped).forEach(group => {
+    const ts = group.ts ? new Date(group.ts).toLocaleString('en-GB') : 'N/A';
+    
+    let bookingsHtml = '';
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      const statusText = (booking.status || 'pending').toUpperCase();
+      bookingsHtml += '<div class="booking-item"><div class="slot-info">' + dayInfo + ' — ' + booking.time + ' UK time</div><span class="slot-status ' + (booking.status || 'pending') + '">' + (booking.status || 'pending') + '</span><div class="booking-actions">' + (booking.status !== 'approved' ? '<button class="btn-book-approve" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'approved'" + ')">Approve</button>' : '') + (booking.status !== 'rejected' ? '<button class="btn-book-reject" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'rejected'" + ')">Reject</button>' : '') + (booking.status === 'approved' ? '<button class="btn-book-release" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'pending'" + ')">Release</button>' : '') + '<button class="btn-book-delete" onclick="deleteBooking(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ')">Delete</button></div></div>';
+    });
+    
+    html += '<div class="new-req-group"><div class="header-line"><div><div class="code">Student Code: ' + group.code + '</div><div class="info"><span>IP: ' + (group.userIP || 'unknown') + '</span><span>Submitted: ' + ts + '</span></div></div></div><div>' + bookingsHtml + '</div></div>';
+  });
+  
+  document.getElementById('newList').innerHTML = html;
+}
+
+function renderHistory() {
+  const oldReqs = Object.entries(allBookings).filter(([k,b]) => b.ts <= lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  
+  if(oldReqs.length === 0) {
+    document.getElementById('historyList').innerHTML = '<div class="empty">No old requests</div>';
+    return;
+  }
+  
+  const grouped = {};
+  oldReqs.forEach(([key,b]) => {
+    if(!grouped[b.code]) {
+      grouped[b.code] = {code: b.code, bookings: [], ts: b.ts, userIP: b.userIP};
+    }
+    grouped[b.code].bookings.push({key, ...b});
+  });
+  
+  let html = '<h3 style="margin-bottom:16px">Past Requests (Newest First)</h3>';
+  Object.values(grouped).forEach(group => {
+    const ts = group.ts ? new Date(group.ts).toLocaleString('en-GB') : 'N/A';
+    
+    let bookingsHtml = '';
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      bookingsHtml += '<div class="booking-item"><div class="slot-info">' + dayInfo + ' — ' + booking.time + ' UK time</div><span class="slot-status ' + (booking.status || 'pending') + '">' + (booking.status || 'pending') + '</span><div class="booking-actions">' + (booking.status !== 'approved' ? '<button class="btn-book-approve" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'approved'" + ')">Approve</button>' : '') + (booking.status !== 'rejected' ? '<button class="btn-book-reject" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'rejected'" + ')">Reject</button>' : '') + (booking.status === 'approved' ? '<button class="btn-book-release" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'pending'" + ')">Release</button>' : '') + '<button class="btn-book-delete" onclick="deleteBooking(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ')">Delete</button></div></div>';
+    });
+    
+    html += '<div class="new-req-group"><div class="header-line"><div><div class="code">Student Code: ' + group.code + '</div><div class="info"><span>IP: ' + (group.userIP || 'unknown') + '</span><span>' + ts + '</span></div></div></div><div>' + bookingsHtml + '</div></div>';
+  });
+  
+  document.getElementById('historyList').innerHTML = html;
+}
+
+function changeBookingStatus(bookingKey, code, dayInfo, time, newStatus) {
+  pendingAction = {bookingKey, code, dayInfo, time, newStatus, type: 'status'};
+  document.getElementById('confirmMsg').innerHTML = 'Change booking status for ' + dayInfo + ' ' + time + ' to <strong>' + newStatus + '</strong>?';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function deleteBooking(bookingKey, code, dayInfo, time) {
+  pendingAction = {bookingKey, code, dayInfo, time, type: 'delete'};
+  document.getElementById('confirmMsg').innerHTML = 'Delete booking for ' + dayInfo + ' ' + time + ' (code: <strong>' + code + '</strong>)?';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmAction() {
+  if(!pendingAction) return;
+  
+  if(!window.firebaseDB) return;
+  const {ref,update,remove,db:fbdb} = window.firebaseDB;
+  
+  if(pendingAction.type === 'status') {
+    update(ref(fbdb,'bookings/'+pendingAction.bookingKey), {status: pendingAction.newStatus});
+  } else if(pendingAction.type === 'delete') {
+    remove(ref(fbdb,'bookings/'+pendingAction.bookingKey));
+  }
+  
+  closeModal();
+  pendingAction = null;
+}
+
+function renderAllRequestsTable() {
+  let thead = '<tr><th style="min-width:60px">Time</th>';
+  weeks.forEach(w => {
+    w.days.forEach(([dl,ds,diso],di) => {
+      const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
+    });
+  });
+  thead += '<th class="time-header">Time</th></tr>';
+  document.getElementById('tableHead').innerHTML = thead;
+  
+  let tbody = '';
+  times.forEach(([ts,tl]) => {
+    tbody += '<tr>';
+    tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
+    
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso],di) => {
+        const slotId = sid(diso,ts);
+        const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
+        const isUnavail = unavailableSlots[slotId];
+        const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
+        const pendingBooking = bookings.find(([k,b]) => b.status === 'pending');
+        
+        const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+        
+        let btn = '';
+        if(isUnavail) {
+          btn = '<button class="slot-btn unavailable" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Unavail</button>';
+        } else if(approvedBooking) {
+          const code = approvedBooking[1].code;
+          btn = '<button class="slot-btn booked" onclick="freeSlot(' + "'" + slotId + "'" + ',' + "'" + code + "'" + ')">' + code + '</button>';
+        } else if(pendingBooking) {
+          const code = pendingBooking[1].code;
+          btn = '<button class="slot-btn pending" onclick="freePendingSlot(' + "'" + slotId + "'" + ',' + "'" + code + "'" + ')">' + code + '</button>';
+        } else {
+          btn = '<button class="slot-btn" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Free</button>';
+        }
+        
+        tbody += '<td class="' + hasSep + '">' + btn + '</td>';
+      });
+    });
+    
+    tbody += '<td class="time-cell">' + tl + '</td></tr>';
+  });
+  
+  document.getElementById('tableBody').innerHTML = tbody;
+}
+
+function updateStats() {
+  const pending = Object.values(allBookings).filter(b => b.status === 'pending').length;
+  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const rejected = Object.values(allBookings).filter(b => b.status === 'rejected').length;
+  const total = Object.keys(allBookings).length;
+  
+  document.getElementById('stats').innerHTML = '<div class="stat-card"><div class="number">' + total + '</div><div class="label">Total</div></div><div class="stat-card"><div class="number">' + pending + '</div><div class="label">Pending</div></div><div class="stat-card"><div class="number">' + approved + '</div><div class="label">Approved</div></div><div class="stat-card"><div class="number">' + rejected + '</div><div class="label">Rejected</div></div>';
+}
+
+function toggleUnavail(slotId) {
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  
+  if(unavailableSlots[slotId]) {
+    set(ref(fbdb,'unavailable/'+slotId), null);
+  } else {
+    set(ref(fbdb,'unavailable/'+slotId), true);
+  }
+}
+
+function freeSlot(slotId, code) {
+  pendingAction = {slotId, code, type: 'free'};
+  document.getElementById('confirmMsg').innerHTML = 'Free booked slot for student code <strong>' + code + '</strong>?<br><br>This will release this lesson and make it available for booking again.';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function freePendingSlot(slotId, code) {
+  pendingAction = {slotId, code, type: 'delete'};
+  document.getElementById('confirmMsg').innerHTML = 'Delete pending booking for student code <strong>' + code + '</strong>?<br><br>This will remove this booking request and free the slot.';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+  document.getElementById('confirmClearModal').classList.remove('show');
+}
+
+function confirmFreeAll() {
+  document.getElementById('confirmPwd').value = '';
+  document.getElementById('confirmClearModal').classList.add('show');
+}
+
+function freeAllSlots() {
+  const pwd = document.getElementById('confirmPwd').value;
+  if(pwd !== ADMIN_PWD) {
+    alert('Wrong password');
+    return;
+  }
+  
+  if(!window.firebaseDB) return;
+  const {ref,remove,db:fbdb} = window.firebaseDB;
+  
+  remove(ref(fbdb,'unavailable')).then(() => {
+    return remove(ref(fbdb,'bookings'));
+  }).then(() => {
+    closeModal();
+    alert('All cleared!');
+  }).catch(err => alert('Error: ' + err));
+}
+
+function exportBackup() {
+  const backup = {
+    bookings: allBookings,
+    unavailable: unavailableSlots,
+    exportDate: new Date().toISOString()
+  };
+  
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dr-jon-booking-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+  document.getElementById('importFile').click();
+}
+
+function importBackup() {
+  const file = document.getElementById('importFile').files[0];
+  if(!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      
+      if(!window.firebaseDB) {alert('Firebase not ready');return;}
+      const {ref,set,db:fbdb} = window.firebaseDB;
+      
+      if(backup.bookings) {
+        set(ref(fbdb,'bookings'), backup.bookings);
+      }
+      if(backup.unavailable) {
+        set(ref(fbdb,'unavailable'), backup.unavailable);
+      }
+      
+      alert('✅ Backup restored successfully!');
+      document.getElementById('importFile').value = '';
+    } catch(err) {
+      alert('❌ Error reading backup file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
