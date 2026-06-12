@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr Jon Summer Lesson Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, set, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAS34ly4yLmiw8hBWN62wg5fi8IhzPwZqI",
+  authDomain: "drjonbooking.firebaseapp.com",
+  databaseURL: "https://drjonbooking-default-rtdb.firebaseio.com",
+  projectId: "drjonbooking",
+  storageBucket: "drjonbooking.firebasestorage.app",
+  messagingSenderId: "211688494004",
+  appId: "1:211688494004:web:cae320e93861f53a59d8e1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window.firebaseDB = { ref, onValue, update, set, remove, db };
+</script>
+
+<style>
+:root{
+  --brand:#1e40af;--brand-light:#e0e7ff;--bg:#f8fafc;--card:#fff;
+  --green:#0891b2;--green-bg:#e0f2fe;--green-dark:#164e63;
+  --line:#e2e8f0;--ink:#0f172a;--muted:#64748b;
+  --warning:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);padding:20px}
+.container{max-width:1200px;margin:0 auto}
+h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--brand);margin-bottom:20px}
+
+.login-section{background:var(--card);padding:30px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:400px;margin:0 auto}
+.login-section input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;margin-bottom:12px;font-family:'DM Sans',sans-serif}
+.login-section button{width:100%;padding:14px;background:var(--brand);color:#fff;border:0;border-radius:10px;font-weight:700;cursor:pointer;font-size:16px;font-family:'DM Sans',sans-serif}
+
+.admin-panel{display:none}
+.header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;background:var(--card);padding:16px 20px;border-radius:12px;border:1px solid var(--line);flex-wrap:wrap;gap:12px}
+.logout-btn{background:var(--warning);color:#fff;border:0;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{border:1.5px solid var(--line);background:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px}
+.tab-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.stat-card .number{font-size:28px;font-weight:800;color:var(--brand);margin-bottom:4px}
+.stat-card .label{font-size:12px;color:var(--muted);font-weight:600}
+
+.controls-export{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-export{background:var(--green);color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+.btn-import{background:#9333ea;color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+
+#importFile{display:none}
+
+.toggle-history{background:var(--brand);color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;margin-bottom:16px;font-family:'DM Sans',sans-serif}
+
+.student-lookup{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+.student-lookup h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--brand)}
+.lookup-controls{display:flex;gap:8px;flex-wrap:wrap}
+.lookup-controls input{flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif}
+.lookup-controls button{padding:8px 16px;background:var(--brand);color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif}
+.student-info{margin-top:12px;font-size:12px;color:var(--ink)}
+.student-info .label{color:var(--muted);font-weight:600}
+
+.new-req-group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+.new-req-group .header-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:2px solid var(--brand);padding-bottom:12px;flex-wrap:wrap;gap:12px}
+.new-req-group .code{font-size:18px;font-weight:800;color:var(--brand)}
+.new-req-group .name{font-size:13px;color:var(--muted);font-weight:600}
+.new-req-group .info{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.new-req-group .info span{display:block}
+
+.selection-box{background:#f1f5f9;border-radius:12px;padding:16px;margin:16px 0}
+.selection-box h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--brand);margin-bottom:8px;font-weight:400}
+.selection-box ol{padding-left:20px;line-height:1.6;font-size:12px;color:var(--ink)}
+
+.booking-item{background:#f8fafc;border-radius:10px;padding:12px;margin:8px 0;border-left:3px solid var(--brand)}
+.booking-item .slot-info{font-size:13px;color:var(--ink);margin-bottom:8px;font-weight:600}
+.booking-item .slot-status{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-right:8px;text-transform:capitalize}
+.booking-item .slot-status.pending{background:#fef08a;color:#92400e}
+.booking-item .slot-status.approved{background:#d1fae5;color:#065f46}
+.booking-item .slot-status.rejected{background:#fee2e2;color:#991b1b}
+
+.booking-history{font-size:11px;color:var(--muted);margin:8px 0;padding:8px;background:#fff;border-radius:6px;border-left:2px solid #ddd}
+
+.booking-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.booking-actions button{padding:6px 12px;border:0;border-radius:5px;cursor:pointer;font-weight:700;font-size:11px;font-family:'DM Sans',sans-serif}
+.btn-book-approve{background:var(--green);color:#fff}
+.btn-book-reject{background:var(--warning);color:#fff}
+.btn-book-delete{background:#ff6b6b;color:#fff}
+
+.all-controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-danger{background:var(--warning);color:#fff;border:0;padding:12px 20px;border-radius:10px;cursor:pointer;font-weight:700;font-family:'DM Sans',sans-serif}
+
+.booking-table{background:var(--card);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid var(--line);overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead th{border:1px solid var(--line);padding:12px 8px;background:#f1f5f9;font-weight:800;font-size:12px;height:60px;vertical-align:middle}
+thead th span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+tbody td{border:1px solid var(--line);padding:4px;text-align:center;height:60px;vertical-align:middle}
+
+th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
+
+.time-header{position:sticky;right:0;z-index:3;background:var(--brand-light)!important;color:var(--brand);font-weight:800;font-size:11px;border-left:2px solid var(--brand)!important;min-width:60px}
+.time-cell{position:sticky;right:0;z-index:2;background:#f0f4ff;color:var(--brand);font-weight:800;font-size:12px;border-left:2px solid var(--brand)!important;min-width:60px}
+
+.slot-btn{display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--green-bg);color:var(--green-dark);font-weight:700;font-size:11px;border-radius:6px;border:none;cursor:pointer;transition:all .15s;width:calc(100% - 8px);margin:4px;font-family:'DM Sans',sans-serif}
+.slot-btn:hover:not(.booked):not(.unavailable){background:#cffafe;transform:scale(1.05)}
+.slot-btn.booked{background:#000;color:#fff;cursor:not-allowed;font-weight:600}
+.slot-btn.unavailable{background:#000;color:#fff;cursor:not-allowed}
+.slot-btn.reserved{background:#8b5cf6;color:#fff;cursor:pointer;font-weight:600}
+.slot-btn.student{cursor:pointer;font-weight:600}
+
+.conflict-warning{background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;overflow-y:auto;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:30px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h2{margin-bottom:16px;color:var(--brand)}
+.modal p{color:var(--muted);margin-bottom:12px}
+.modal input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;margin-bottom:16px;font-family:'DM Sans',sans-serif}
+.modal-buttons{display:flex;gap:12px;margin-top:24px}
+.modal-buttons button{flex:1;padding:12px;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:'DM Sans',sans-serif}
+.btn-confirm{background:var(--green);color:#fff}
+.btn-cancel{background:var(--line);color:var(--ink)}
+
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:16px}
+
+@media(max-width:600px){
+  table{font-size:11px}
+  thead th{padding:8px 4px;height:50px}
+  tbody td{height:50px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="login-section" id="loginSection">
+    <h1 style="text-align:center;margin-bottom:24px">Admin Login</h1>
+    <input type="password" id="pwdInput" placeholder="Enter admin password">
+    <button onclick="adminLogin()">Login</button>
+  </div>
+
+  <div class="admin-panel" id="adminPanel">
+    <div class="header-bar">
+      <h1>Dr Jon Summer Lesson Booking</h1>
+      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('new')">New Requests</button>
+      <button class="tab-btn" onclick="switchTab('all')">All Requests</button>
+    </div>
+
+    <div id="newTab">
+      <div class="stats" id="stats"></div>
+      <button class="toggle-history" onclick="toggleHistory()">📋 Show Old Requests</button>
+      <div id="newList"></div>
+      <div id="historyList" style="display:none;margin-top:20px"></div>
+    </div>
+
+    <div id="allTab" style="display:none">
+      <div class="student-lookup">
+        <h3>📝 Assign Student Name to Code</h3>
+        <div class="lookup-controls">
+          <select id="codeSelect" onchange="onCodeSelected()" style="flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif">
+            <option value="">-- Select a code --</option>
+          </select>
+          <input type="text" id="assignName" placeholder="Student name (e.g. Karsten)" style="flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <button onclick="saveCodeName()" style="padding:8px 16px;background:var(--green);color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif">Save</button>
+        </div>
+      </div>
+
+      <div class="student-lookup">
+        <h3>👤 View Student Bookings</h3>
+        <div class="lookup-controls">
+          <select id="studentCodeSelect" onchange="showStudentBookings()" style="flex:1;min-width:150px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif">
+            <option value="">-- Select a student code --</option>
+          </select>
+          <button onclick="generateConfirmMessage()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap">💬 Generate Message</button>
+        </div>
+        <div id="studentBookingsPanel" style="display:none;margin-top:16px;background:#f1f5f9;border-radius:12px;padding:16px;max-height:600px;overflow-y:auto"></div>
+      </div>
+
+      <div class="controls-export">
+        <button class="btn-export" onclick="exportBackup()">💾 Download Backup</button>
+        <button class="btn-import" onclick="triggerImport()">📤 Upload Backup</button>
+        <input type="file" id="importFile" accept=".json" onchange="importBackup()">
+      </div>
+      <div class="all-controls">
+        <button class="btn-danger" onclick="confirmFreeAll()">Free All Slots & Clear Requests</button>
+      </div>
+
+      <div class="booking-table">
+        <table id="requestTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h2>Confirm Action</h2>
+    <p id="confirmMsg"></p>
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="confirmAction()">Yes</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmClearModal">
+  <div class="modal">
+    <h2>Free All Slots & Clear All Requests?</h2>
+    <p>Type password to confirm:</p>
+    <input type="password" id="confirmPwd" placeholder="Enter password">
+    <div class="modal-buttons">
+      <button class="btn-confirm" onclick="freeAllSlots()">Yes, Clear All</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PWD = "drjon223";
+let db = null;
+let allBookings = {};
+let unavailableSlots = {};
+let studentNames = {};
+let lastLoginTime = Date.now();
+let pendingAction = null;
+let showingHistory = false;
+let currentLookupCode = '';
+
+const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
+
+function getColorForCode(code) {
+  if(!code || code.length===0) return '#ccc';
+  const firstLetter = code.charCodeAt(0) - 65;
+  return colors26[firstLetter % 26];
+}
+
+const weeks = [
+  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
+  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
+  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
+  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]}
+];
+
+const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
+
+function sid(diso, tstr) {
+  return "s" + diso.replace(/-/g,"") + tstr.replace(/:/g,"");
+}
+
+function getLocalTime(dateISO, timeStr, tz) {
+  try {
+    const dt = new Date(dateISO+'T'+timeStr+':00+01:00');
+    return new Intl.DateTimeFormat('en-GB',{timeZone:tz,weekday:'long',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(dt);
+  } catch(e) {return dateISO+' '+timeStr;}
+}
+
+function adminLogin() {
+  const pwd = document.getElementById('pwdInput').value;
+  if(pwd !== ADMIN_PWD) {
+    alert('Wrong password');
+    return;
+  }
+  lastLoginTime = Date.now();
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadData();
+}
+
+function adminLogout() {
+  document.getElementById('loginSection').style.display = 'block';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('pwdInput').value = '';
+  showingHistory = false;
+  document.getElementById('historyList').style.display = 'none';
+}
+
+function loadData() {
+  if(!window.firebaseDB) {setTimeout(loadData,100);return;}
+  const {ref,onValue,db:fbdb} = window.firebaseDB;
+  db = fbdb;
+  
+  onValue(ref(db,'bookings'), snap => {
+    allBookings = snap.val() || {};
+    checkConflicts();
+    renderNewRequests();
+    renderAllRequestsTable();
+    updateStats();
+  });
+  
+  onValue(ref(db,'unavailable'), snap => {
+    unavailableSlots = snap.val() || {};
+    renderAllRequestsTable();
+  });
+  
+  onValue(ref(db,'studentNames'), snap => {
+    studentNames = snap.val() || {};
+    renderNewRequests();
+  });
+}
+
+function checkConflicts() {
+  Object.entries(allBookings).forEach(([key, booking]) => {
+    if(!booking.slotId) return;
+    const otherBookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === booking.slotId && k !== key && b.status === 'approved');
+    if(otherBookings.length > 0 && booking.status === 'approved') {
+      booking.hasConflict = true;
+    }
+  });
+}
+
+function updateStats() {
+  const pending = Object.values(allBookings).filter(b => b.status === 'pending').length;
+  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const rejected = Object.values(allBookings).filter(b => b.status === 'rejected').length;
+  const total = Object.keys(allBookings).length;
+  const conflicts = Object.values(allBookings).filter(b => b.hasConflict).length;
+  
+  let statsHtml = '<div class="stat-card"><div class="number">' + total + '</div><div class="label">Total</div></div><div class="stat-card"><div class="number">' + pending + '</div><div class="label">Pending</div></div><div class="stat-card"><div class="number">' + approved + '</div><div class="label">Approved</div></div><div class="stat-card"><div class="number">' + rejected + '</div><div class="label">Rejected</div></div>';
+  
+  if(conflicts > 0) {
+    statsHtml += '<div class="stat-card" style="border-color:var(--warning);background:#fee2e2"><div class="number" style="color:var(--warning)">' + conflicts + '</div><div class="label">Conflicts</div></div>';
+  }
+  
+  document.getElementById('stats').innerHTML = statsHtml;
+  
+  // Update dropdown with all codes
+  updateStudentCodeDropdown();
+}
+
+function updateStudentCodeDropdown() {
+  // Get codes that have APPROVED bookings in the matrix
+  const codesInMatrix = new Set();
+  
+  times.forEach(([ts,tl]) => {
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        // Check if this slot has an approved booking
+        const approvedBooking = Object.entries(allBookings).find(([k,b]) => b.slotId === slotId && b.status === 'approved');
+        if(approvedBooking) {
+          codesInMatrix.add(approvedBooking[1].code);
+        }
+      });
+    });
+  });
+  
+  // Update student code select for viewing bookings
+  const selectView = document.getElementById('studentCodeSelect');
+  const currentValue = selectView.value;
+  
+  selectView.innerHTML = '<option value="">-- Select a student code --</option>';
+  Array.from(codesInMatrix).sort().forEach(code => {
+    const option = document.createElement('option');
+    option.value = code;
+    const name = studentNames[code] ? ' - ' + studentNames[code] : '';
+    option.textContent = code + name;
+    selectView.appendChild(option);
+  });
+  
+  if(currentValue) selectView.value = currentValue;
+  
+  // Update code select for name assignment
+  const selectName = document.getElementById('codeSelect');
+  selectName.innerHTML = '<option value="">-- Select a code --</option>';
+  Array.from(codesInMatrix).sort().forEach(code => {
+    const option = document.createElement('option');
+    option.value = code;
+    const name = studentNames[code] ? ' - ' + studentNames[code] : '';
+    option.textContent = code + name;
+    selectName.appendChild(option);
+  });
+}
+
+function showStudentBookings() {
+  const code = document.getElementById('studentCodeSelect').value;
+  if(!code) {
+    document.getElementById('studentBookingsPanel').style.display = 'none';
+    resetMatrixHighlight();
+    return;
+  }
+  
+  // Get bookings ONLY from the matrix (approved slots)
+  const matrixBookings = [];
+  let timezone = 'Europe/London';
+  let timezoneName = 'UK time';
+  
+  times.forEach(([ts,tl]) => {
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        const booking = Object.entries(allBookings).find(([k,b]) => b.slotId === slotId && b.code === code && b.status === 'approved');
+        if(booking) {
+          // Capture timezone from first booking
+          if(!timezone || timezone === 'Europe/London') {
+            timezone = booking[1].timezone || 'Europe/London';
+            timezoneName = booking[1].timezoneName || 'UK time';
+          }
+          matrixBookings.push({
+            date: diso,
+            time: ts,
+            dayLabel: dl,
+            dayName: dayFull[ds],
+            approvedAt: booking[1].approvedAt,
+            slotId: slotId
+          });
+        }
+      });
+    });
+  });
+  
+  matrixBookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  
+  if(matrixBookings.length === 0) {
+    document.getElementById('studentBookingsPanel').innerHTML = '<p style="color:var(--muted)">No approved bookings in matrix for this student</p>';
+    document.getElementById('studentBookingsPanel').style.display = 'block';
+    resetMatrixHighlight();
+    return;
+  }
+  
+  const name = studentNames[code] || '';
+  const latestApproval = new Date(Math.max(...matrixBookings.map(b => b.approvedAt || 0))).toLocaleString('en-GB');
+  
+  let html = '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:var(--brand);margin-bottom:4px">👤 Student Code: ' + code + '</div>';
+  if(name) html += '<div style="font-size:13px;color:var(--ink);font-weight:600">' + name + '</div>';
+  html += '<div style="font-size:12px;color:var(--muted);margin-top:4px">Approved: ' + latestApproval + '</div></div>';
+  
+  html += '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:12px"><h4 style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:8px">🇬🇧 UK time (' + matrixBookings.length + ' slots)</h4><div style="font-size:12px;line-height:1.8">';
+  
+  matrixBookings.forEach(b => {
+    html += b.dayName + ' ' + b.dayLabel + ' — ' + b.time + ' UK time<br>';
+  });
+  
+  html += '</div></div>';
+  
+  // Add local timezone if different from UK
+  if(timezone && timezone !== 'Europe/London') {
+    html += '<div style="background:#fff;border-radius:10px;padding:12px"><h4 style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:8px">🌏 ' + timezoneName + ' (' + matrixBookings.length + ' slots)</h4><div style="font-size:12px;line-height:1.8">';
+    
+    matrixBookings.forEach(b => {
+      const localTime = getLocalTime(b.date, b.time, timezone);
+      html += localTime + ' (' + timezoneName + ')<br>';
+    });
+    
+    html += '</div></div>';
+  }
+  
+  document.getElementById('studentBookingsPanel').innerHTML = html;
+  document.getElementById('studentBookingsPanel').style.display = 'block';
+  
+  // Highlight this student's bookings in matrix
+  highlightStudentBookings(code, matrixBookings);
+}
+
+function onCodeSelected() {
+  const code = document.getElementById('codeSelect').value;
+  if(code) {
+    document.getElementById('assignName').value = studentNames[code] || '';
+  } else {
+    document.getElementById('assignName').value = '';
+  }
+}
+
+function saveCodeName() {
+  const code = document.getElementById('codeSelect').value;
+  const name = document.getElementById('assignName').value.trim();
+  
+  if(!code) {
+    alert('Please select a code');
+    return;
+  }
+  
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  
+  if(name) {
+    set(ref(fbdb,'studentNames/'+code), name).then(() => {
+      alert('✅ Name saved for ' + code);
+      renderAllRequestsTable();
+    });
+  } else {
+    set(ref(fbdb,'studentNames/'+code), null).then(() => {
+      alert('✅ Name cleared for ' + code);
+      renderAllRequestsTable();
+    });
+  }
+}
+
+function generateConfirmMessage() {
+  const code = document.getElementById('studentCodeSelect').value;
+  if(!code) {
+    alert('Please select a student code');
+    return;
+  }
+  
+  // Get bookings ONLY from the matrix (approved slots)
+  const matrixBookings = [];
+  let timezone = 'Europe/London';
+  let timezoneName = 'UK time';
+  
+  times.forEach(([ts,tl]) => {
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        const booking = Object.entries(allBookings).find(([k,b]) => b.slotId === slotId && b.code === code && b.status === 'approved');
+        if(booking) {
+          // Capture timezone from first booking
+          if(!timezone || timezone === 'Europe/London') {
+            timezone = booking[1].timezone || 'Europe/London';
+            timezoneName = booking[1].timezoneName || 'UK time';
+          }
+          matrixBookings.push({
+            date: diso,
+            time: ts,
+            dayLabel: dl,
+            dayName: dayFull[ds]
+          });
+        }
+      });
+    });
+  });
+  
+  matrixBookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  
+  if(matrixBookings.length === 0) {
+    alert('No approved bookings for this student in the matrix');
+    return;
+  }
+  
+  const name = studentNames[code] || code;
+  
+  let msgText = 'Hi ' + name + ',\n\nPlease confirm the following booking is correct:\n\n🇬🇧 UK time\n';
+  
+  matrixBookings.forEach(b => {
+    msgText += b.dayName + ' ' + b.dayLabel + ' — ' + b.time + ' UK time\n';
+  });
+  
+  // Add local timezone if different
+  if(timezone && timezone !== 'Europe/London') {
+    msgText += '\n🌏 ' + timezoneName + '\n';
+    matrixBookings.forEach(b => {
+      const localTime = getLocalTime(b.date, b.time, timezone);
+      msgText += localTime + '\n';
+    });
+  }
+  
+  msgText += '\nThank you,\nDr Jon';
+  
+  // Show in modal/textarea for copying
+  const modalContent = '<h2>Confirmation Message</h2><p>Copy and send to ' + name + ':</p><textarea style="width:100%;height:300px;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-family:monospace;font-size:12px;resize:vertical">' + msgText + '</textarea><div style="margin-top:12px;display:flex;gap:8px"><button onclick="copyMessageText()" style="flex:1;padding:10px;background:#3b82f6;color:#fff;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:\'DM Sans\',sans-serif">📋 Copy to Clipboard</button><button onclick="closeMessageModal()" style="flex:1;padding:10px;background:var(--line);color:var(--ink);border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:\'DM Sans\',sans-serif">Close</button></div>';
+  
+  document.getElementById('messageModal').innerHTML = modalContent;
+  document.getElementById('messageLightbox').classList.add('show');
+}
+
+function copyMessageText() {
+  const textarea = document.querySelector('#messageModal textarea');
+  textarea.select();
+  document.execCommand('copy');
+  alert('✅ Message copied to clipboard!');
+}
+
+function closeMessageModal() {
+  document.getElementById('messageLightbox').classList.remove('show');
+}
+
+function cancelStudentBooking(slotId, code, displayText) {
+  let dayLabel = '';
+  let timeLabel = '';
+  
+  times.forEach(([ts,tl]) => {
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        if(sid(diso,ts) === slotId) {
+          dayLabel = dayFull[ds] + ' ' + dl;
+          timeLabel = ts;
+        }
+      });
+    });
+  });
+  
+  if(confirm('Cancel booking for ' + displayText + '?\n' + dayLabel + ' — ' + timeLabel + '\n\nThis will remove the booking from the matrix.')) {
+    if(!window.firebaseDB) return;
+    const {ref,remove,db:fbdb} = window.firebaseDB;
+    
+    Object.entries(allBookings).forEach(([k,b]) => {
+      if(b.slotId === slotId && b.code === code && b.status === 'approved') {
+        remove(ref(fbdb,'bookings/'+k)).then(() => {
+          alert('✅ Booking cancelled for ' + displayText);
+        }).catch(err => {
+          alert('Error cancelling booking');
+          console.error(err);
+        });
+      }
+    });
+  }
+}
+
+function highlightStudentBookings(code, matrixBookings) {
+  // Dim all student slots
+  const allSlots = document.querySelectorAll('.slot-btn.student');
+  allSlots.forEach(slot => {
+    slot.style.opacity = '0.3';
+  });
+  
+  // Brighten selected student's slots
+  const selectedSlotIds = new Set(matrixBookings.map(b => b.slotId));
+  allSlots.forEach(slot => {
+    // Find which slot this button is for
+    const parent = slot.closest('td');
+    if(parent) {
+      const siblingSlotId = findSlotIdFromButton(slot);
+      if(selectedSlotIds.has(siblingSlotId)) {
+        slot.style.opacity = '1';
+        slot.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
+      } else {
+        slot.style.boxShadow = 'none';
+      }
+    }
+  });
+}
+
+function findSlotIdFromButton(btn) {
+  const onclick = btn.getAttribute('onclick');
+  if(onclick) {
+    const match = onclick.match(/cancelStudentBooking\('([^']+)'/);
+    if(match) return match[1];
+  }
+  return null;
+}
+
+function resetMatrixHighlight() {
+  const allSlots = document.querySelectorAll('.slot-btn.student');
+  allSlots.forEach(slot => {
+    slot.style.opacity = '1';
+    slot.style.boxShadow = 'none';
+  });
+}
+
+function switchTab(tab) {
+  document.getElementById('newTab').style.display = tab==='new'?'block':'none';
+  document.getElementById('allTab').style.display = tab==='all'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if(tab === 'all') {
+    // Reload studentNames from Firebase
+    if(!window.firebaseDB) return;
+    const {ref,onValue,db:fbdb} = window.firebaseDB;
+    onValue(ref(fbdb,'studentNames'), snap => {
+      studentNames = snap.val() || {};
+      updateStudentCodeDropdown();
+      renderAllRequestsTable();
+    });
+  }
+}
+
+function toggleHistory() {
+  showingHistory = !showingHistory;
+  if(showingHistory) {
+    renderHistory();
+    document.getElementById('historyList').style.display = 'block';
+    event.target.textContent = '📋 Hide Old Requests';
+  } else {
+    document.getElementById('historyList').style.display = 'none';
+    event.target.textContent = '📋 Show Old Requests';
+  }
+}
+
+function renderNewRequests() {
+  const newReqs = Object.entries(allBookings).filter(([k,b]) => b.ts > lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  
+  if(newReqs.length === 0) {
+    document.getElementById('newList').innerHTML = '<div class="empty">No new requests</div>';
+    return;
+  }
+  
+  const grouped = {};
+  newReqs.forEach(([key,b]) => {
+    if(!grouped[b.code]) {
+      grouped[b.code] = {code: b.code, bookings: [], ts: b.ts, userIP: b.userIP};
+    }
+    grouped[b.code].bookings.push({key, ...b});
+  });
+  
+  let html = '';
+  Object.values(grouped).forEach(group => {
+    const ts = group.ts ? new Date(group.ts).toLocaleString('en-GB') : 'N/A';
+    const name = studentNames[group.code] || '';
+    
+    let ukList = '';
+    let localList = '';
+    let hasLocalTz = false;
+    let tzName = '';
+    
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      ukList += '<li>' + dayInfo + ' — ' + booking.time + ' UK time</li>';
+      
+      if(booking.timezone && booking.timezone !== 'Europe/London' && booking.timezoneName) {
+        hasLocalTz = true;
+        tzName = booking.timezoneName;
+        const localTime = getLocalTime(booking.date, booking.time, booking.timezone);
+        localList += '<li>' + localTime + ' (' + booking.timezoneName + ')</li>';
+      }
+    });
+    
+    let bookingsHtml = '';
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      let historyHtml = '';
+      if(booking.approvedAt) {
+        historyHtml = '<div class="booking-history">✓ Approved on ' + new Date(booking.approvedAt).toLocaleString('en-GB') + '</div>';
+      } else if(booking.rejectedAt) {
+        historyHtml = '<div class="booking-history">✕ Rejected on ' + new Date(booking.rejectedAt).toLocaleString('en-GB') + '</div>';
+      }
+      
+      let conflictWarn = '';
+      if(booking.hasConflict) {
+        conflictWarn = '<div class="conflict-warning">⚠️ CONFLICT: Multiple approvals on same slot!</div>';
+      }
+      
+      bookingsHtml += '<div class="booking-item">' + conflictWarn + '<div class="slot-info">' + dayInfo + ' — ' + booking.time + ' UK time</div><span class="slot-status ' + (booking.status || 'pending') + '">' + (booking.status || 'pending') + '</span>' + historyHtml + '<div class="booking-actions">' + (booking.status === 'pending' ? '<button class="btn-book-approve" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'approved'" + ')">Approve</button>' : '') + (booking.status === 'pending' ? '<button class="btn-book-reject" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'rejected'" + ')">Reject</button>' : '') + '<button class="btn-book-delete" onclick="deleteBooking(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ')">Delete</button></div></div>';
+    });
+    
+    let localSection = '';
+    if(hasLocalTz) {
+      localSection = '<div class="selection-box"><h3>🌏 Your timezone — ' + tzName + '</h3><ol>' + localList + '</ol></div>';
+    }
+    
+    html += '<div class="new-req-group"><div class="header-line"><div><div class="code">Student Code: ' + group.code + '</div>' + (name ? '<div class="name">' + name + '</div>' : '') + '<div class="info"><span>IP: ' + (group.userIP || 'unknown') + '</span><span>Submitted: ' + ts + '</span></div></div></div><div class="selection-box"><h3>🇬🇧 UK time</h3><ol>' + ukList + '</ol></div>' + localSection + '<div>' + bookingsHtml + '</div></div>';
+  });
+  
+  document.getElementById('newList').innerHTML = html;
+}
+
+function renderHistory() {
+  const oldReqs = Object.entries(allBookings).filter(([k,b]) => b.ts <= lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  
+  if(oldReqs.length === 0) {
+    document.getElementById('historyList').innerHTML = '<div class="empty">No old requests</div>';
+    return;
+  }
+  
+  const grouped = {};
+  oldReqs.forEach(([key,b]) => {
+    if(!grouped[b.code]) {
+      grouped[b.code] = {code: b.code, bookings: [], ts: b.ts, userIP: b.userIP};
+    }
+    grouped[b.code].bookings.push({key, ...b});
+  });
+  
+  let html = '<h3 style="margin-bottom:16px">Past Requests (Newest First)</h3>';
+  Object.values(grouped).forEach(group => {
+    const ts = group.ts ? new Date(group.ts).toLocaleString('en-GB') : 'N/A';
+    const name = studentNames[group.code] || '';
+    
+    let ukList = '';
+    let localList = '';
+    let hasLocalTz = false;
+    let tzName = '';
+    
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      ukList += '<li>' + dayInfo + ' — ' + booking.time + ' UK time</li>';
+      
+      if(booking.timezone && booking.timezone !== 'Europe/London' && booking.timezoneName) {
+        hasLocalTz = true;
+        tzName = booking.timezoneName;
+        const localTime = getLocalTime(booking.date, booking.time, booking.timezone);
+        localList += '<li>' + localTime + ' (' + booking.timezoneName + ')</li>';
+      }
+    });
+    
+    let bookingsHtml = '';
+    group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
+      let dayInfo = 'Unknown';
+      weeks.forEach(w => {
+        w.days.forEach(([dl,ds,diso]) => {
+          if(diso === booking.date) {
+            dayInfo = dayFull[ds] + ' ' + dl;
+          }
+        });
+      });
+      
+      let historyHtml = '';
+      if(booking.approvedAt) {
+        historyHtml = '<div class="booking-history">✓ Approved on ' + new Date(booking.approvedAt).toLocaleString('en-GB') + '</div>';
+      } else if(booking.rejectedAt) {
+        historyHtml = '<div class="booking-history">✕ Rejected on ' + new Date(booking.rejectedAt).toLocaleString('en-GB') + '</div>';
+      }
+      
+      bookingsHtml += '<div class="booking-item"><div class="slot-info">' + dayInfo + ' — ' + booking.time + ' UK time</div><span class="slot-status ' + (booking.status || 'pending') + '">' + (booking.status || 'pending') + '</span>' + historyHtml + '<div class="booking-actions">' + (booking.status === 'pending' ? '<button class="btn-book-approve" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'approved'" + ')">Approve</button>' : '') + (booking.status === 'pending' ? '<button class="btn-book-reject" onclick="changeBookingStatus(' + "'" + booking.key + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ', ' + "'rejected'" + ')">Reject</button>' : '') + '<button class="btn-book-delete" onclick="deleteBooking(' + "'" + booking.key + "'" + ', ' + "'" + group.code + "'" + ', ' + "'" + dayInfo + "'" + ', ' + "'" + booking.time + "'" + ')">Delete</button></div></div>';
+    });
+    
+    let localSection = '';
+    if(hasLocalTz) {
+      localSection = '<div class="selection-box"><h3>🌏 Your timezone — ' + tzName + '</h3><ol>' + localList + '</ol></div>';
+    }
+    
+    html += '<div class="new-req-group"><div class="header-line"><div><div class="code">Student Code: ' + group.code + '</div>' + (name ? '<div class="name">' + name + '</div>' : '') + '<div class="info"><span>IP: ' + (group.userIP || 'unknown') + '</span><span>' + ts + '</span></div></div></div><div class="selection-box"><h3>🇬🇧 UK time</h3><ol>' + ukList + '</ol></div>' + localSection + '<div>' + bookingsHtml + '</div></div>';
+  });
+  
+  document.getElementById('historyList').innerHTML = html;
+}
+
+function changeBookingStatus(bookingKey, dayInfo, time, newStatus) {
+  pendingAction = {bookingKey, dayInfo, time, newStatus, type: 'status'};
+  document.getElementById('confirmMsg').innerHTML = 'Change booking status for ' + dayInfo + ' ' + time + ' to <strong>' + newStatus.toUpperCase() + '</strong>?';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function deleteBooking(bookingKey, code, dayInfo, time) {
+  pendingAction = {bookingKey, code, dayInfo, time, type: 'delete'};
+  document.getElementById('confirmMsg').innerHTML = 'Delete booking for ' + dayInfo + ' ' + time + ' (code: <strong>' + code + '</strong>)? This will remove the entire entry.';
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmAction() {
+  if(!pendingAction) return;
+  
+  if(!window.firebaseDB) return;
+  const {ref,update,remove,db:fbdb} = window.firebaseDB;
+  
+  if(pendingAction.type === 'status') {
+    const updateData = {status: pendingAction.newStatus};
+    if(pendingAction.newStatus === 'approved') {
+      updateData.approvedAt = Date.now();
+    } else if(pendingAction.newStatus === 'rejected') {
+      updateData.rejectedAt = Date.now();
+    }
+    update(ref(fbdb,'bookings/'+pendingAction.bookingKey), updateData);
+  } else if(pendingAction.type === 'delete') {
+    remove(ref(fbdb,'bookings/'+pendingAction.bookingKey));
+  }
+  
+  closeModal();
+  pendingAction = null;
+}
+
+function renderAllRequestsTable() {
+  let thead = '<tr><th style="min-width:60px">Time</th>';
+  weeks.forEach(w => {
+    w.days.forEach(([dl,ds,diso],di) => {
+      const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
+    });
+  });
+  thead += '<th class="time-header">Time</th></tr>';
+  document.getElementById('tableHead').innerHTML = thead;
+  
+  let tbody = '';
+  times.forEach(([ts,tl]) => {
+    tbody += '<tr>';
+    tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
+    
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso],di) => {
+        const slotId = sid(diso,ts);
+        const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
+        const isUnavail = unavailableSlots[slotId];
+        const isReserved = isUnavail && isUnavail.reserved;
+        const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
+        const pendingBooking = bookings.find(([k,b]) => b.status === 'pending');
+        
+        const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+        
+        let btn = '';
+        if(approvedBooking) {
+          const code = approvedBooking[1].code;
+          const color = getColorForCode(code);
+          const displayText = studentNames[code] || code;
+          btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff;cursor:pointer" title="' + code + ' - ' + displayText + '\n\nClick to cancel" onclick="cancelStudentBooking(' + "'" + slotId + "'" + ', ' + "'" + code + "'" + ', ' + "'" + displayText + "'" + ')">' + displayText + '</button>';
+        } else if(pendingBooking) {
+          const code = pendingBooking[1].code;
+          btn = '<button class="slot-btn pending">' + code + '</button>';
+        } else if(isReserved) {
+          btn = '<button class="slot-btn reserved" onclick="toggleReserved(' + "'" + slotId + "'" + ')">Reserved</button>';
+        } else if(isUnavail) {
+          btn = '<button class="slot-btn unavailable" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Unavail</button>';
+        } else {
+          btn = '<button class="slot-btn" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Free</button>';
+        }
+        
+        tbody += '<td class="' + hasSep + '">' + btn + '</td>';
+      });
+    });
+    
+    tbody += '<td class="time-cell">' + tl + '</td></tr>';
+  });
+  
+  document.getElementById('tableBody').innerHTML = tbody;
+}
+
+function updateStats() {
+  const pending = Object.values(allBookings).filter(b => b.status === 'pending').length;
+  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const rejected = Object.values(allBookings).filter(b => b.status === 'rejected').length;
+  const total = Object.keys(allBookings).length;
+  const conflicts = Object.values(allBookings).filter(b => b.hasConflict).length;
+  
+  let statsHtml = '<div class="stat-card"><div class="number">' + total + '</div><div class="label">Total</div></div><div class="stat-card"><div class="number">' + pending + '</div><div class="label">Pending</div></div><div class="stat-card"><div class="number">' + approved + '</div><div class="label">Approved</div></div><div class="stat-card"><div class="number">' + rejected + '</div><div class="label">Rejected</div></div>';
+  
+  if(conflicts > 0) {
+    statsHtml += '<div class="stat-card" style="border-color:var(--warning);background:#fee2e2;cursor:pointer" onclick="showConflictDetails()"><div class="number" style="color:var(--warning)">' + conflicts + '</div><div class="label">Conflicts (click)</div></div>';
+  }
+  
+  document.getElementById('stats').innerHTML = statsHtml;
+  
+  // Update code dropdown
+  updateCodeDropdown();
+}
+
+function showConflictDetails() {
+  const conflictMap = {};
+  
+  // Find all conflicting slots
+  times.forEach(([ts,tl]) => {
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        const approvedForSlot = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId && b.status === 'approved');
+        
+        if(approvedForSlot.length > 1) {
+          const dayInfo = dayFull[ds] + ' ' + dl + ' — ' + ts;
+          conflictMap[dayInfo] = approvedForSlot.map(([k,b]) => ({
+            code: b.code,
+            name: studentNames[b.code] || b.code,
+            approvedAt: new Date(b.approvedAt).toLocaleString('en-GB')
+          }));
+        }
+      });
+    });
+  });
+  
+  let html = '<h2>⚠️ Booking Conflicts</h2><p style="color:var(--muted);margin-bottom:16px">The following time slots have multiple approved bookings:</p>';
+  
+  Object.entries(conflictMap).forEach(([slot, bookings]) => {
+    html += '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-weight:700;color:#991b1b;margin-bottom:8px">📍 ' + slot + '</div>';
+    bookings.forEach(b => {
+      html += '<div style="font-size:12px;color:#991b1b;margin:6px 0">• ' + b.code + ' - ' + b.name + ' (approved ' + b.approvedAt + ')</div>';
+    });
+    html += '</div>';
+  });
+  
+  html += '<div style="margin-top:16px"><button onclick="closeConflictModal()" style="width:100%;padding:10px;background:var(--brand);color:#fff;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:\'DM Sans\',sans-serif">Close</button></div>';
+  
+  document.getElementById('messageModal').innerHTML = html;
+  document.getElementById('messageLightbox').classList.add('show');
+}
+
+function closeConflictModal() {
+  document.getElementById('messageLightbox').classList.remove('show');
+}
+
+function updateCodeDropdown() {
+  const codes = new Set();
+  Object.values(allBookings).forEach(b => {
+    if(b.code) codes.add(b.code);
+  });
+  
+  const codeSelect = document.getElementById('codeSelect');
+  const currentValue = codeSelect.value;
+  
+  codeSelect.innerHTML = '<option value="">-- Select a code --</option>';
+  Array.from(codes).sort().forEach(code => {
+    const option = document.createElement('option');
+    option.value = code;
+    const name = studentNames[code] ? ' - ' + studentNames[code] : '';
+    option.textContent = code + name;
+    codeSelect.appendChild(option);
+  });
+  
+  if(currentValue) codeSelect.value = currentValue;
+}
+
+function onCodeSelected() {
+  const code = document.getElementById('codeSelect').value;
+  if(code) {
+    document.getElementById('assignName').value = studentNames[code] || '';
+  } else {
+    document.getElementById('assignName').value = '';
+  }
+}
+
+function saveCodeName() {
+  const code = document.getElementById('codeSelect').value;
+  const name = document.getElementById('assignName').value.trim();
+  
+  if(!code) {
+    alert('Please select a code');
+    return;
+  }
+  
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  
+  if(name) {
+    set(ref(fbdb,'studentNames/'+code), name).then(() => {
+      alert('✅ Name saved for ' + code);
+      renderAllRequestsTable();
+    });
+  } else {
+    set(ref(fbdb,'studentNames/'+code), null).then(() => {
+      alert('✅ Name cleared for ' + code);
+      renderAllRequestsTable();
+    });
+  }
+}
+
+function toggleUnavail(slotId) {
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  
+  if(unavailableSlots[slotId]) {
+    set(ref(fbdb,'unavailable/'+slotId), null);
+  } else {
+    set(ref(fbdb,'unavailable/'+slotId), true);
+  }
+}
+
+function toggleReserved(slotId) {
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  
+  const isReserved = unavailableSlots[slotId] && unavailableSlots[slotId].reserved;
+  if(isReserved) {
+    set(ref(fbdb,'unavailable/'+slotId), null);
+  } else {
+    set(ref(fbdb,'unavailable/'+slotId), {reserved: true});
+  }
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+  document.getElementById('confirmClearModal').classList.remove('show');
+}
+
+function confirmFreeAll() {
+  document.getElementById('confirmPwd').value = '';
+  document.getElementById('confirmClearModal').classList.add('show');
+}
+
+function freeAllSlots() {
+  const pwd = document.getElementById('confirmPwd').value;
+  if(pwd !== ADMIN_PWD) {
+    alert('Wrong password');
+    return;
+  }
+  
+  if(!window.firebaseDB) return;
+  const {ref,remove,db:fbdb} = window.firebaseDB;
+  
+  remove(ref(fbdb,'unavailable')).then(() => {
+    return remove(ref(fbdb,'bookings'));
+  }).then(() => {
+    closeModal();
+    alert('All cleared!');
+  }).catch(err => alert('Error: ' + err));
+}
+
+function exportBackup() {
+  const backup = {
+    bookings: allBookings,
+    unavailable: unavailableSlots,
+    studentNames: studentNames,
+    heldSlots: {},
+    exportDate: new Date().toISOString()
+  };
+  
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dr-jon-booking-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+  document.getElementById('importFile').click();
+}
+
+function importBackup() {
+  const file = document.getElementById('importFile').files[0];
+  if(!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      
+      if(!window.firebaseDB) {alert('Firebase not ready');return;}
+      const {ref,set,db:fbdb} = window.firebaseDB;
+      
+      if(backup.bookings) {
+        set(ref(fbdb,'bookings'), backup.bookings);
+      }
+      if(backup.unavailable) {
+        set(ref(fbdb,'unavailable'), backup.unavailable);
+      }
+      if(backup.studentNames) {
+        set(ref(fbdb,'studentNames'), backup.studentNames);
+      }
+      
+      alert('✅ Backup restored successfully!');
+      document.getElementById('importFile').value = '';
+    } catch(err) {
+      alert('❌ Error reading backup file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+<div class="modal-overlay" id="messageLightbox">
+  <div class="modal" id="messageModal" style="max-width:600px"></div>
+</div>
+
+</body>
+</html>
