@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dr Jon - My Timetable</title>
+  <script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-app-compat.min.js"></script>
+  <script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-database-compat.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: #f4f4f6; 
+      padding: 20px;
+      color: #333;
+    }
+    
+    .hdr {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #fff;
+      padding: 16px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .hdr h1 {
+      font-size: 28px;
+      color: #1e40af;
+      margin-bottom: 8px;
+    }
+    
+    .hdr p {
+      font-size: 14px;
+      color: #999;
+    }
+    
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e40af;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+    
+    .mwrap {
+      margin-bottom: 20px;
+      background: #fff;
+      border-radius: 12px;
+      overflow-x: auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+      border: 1px solid #e5e7eb;
+    }
+    
+    table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    
+    thead th, tbody td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      height: 52px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 12px;
+    }
+    
+    thead th {
+      background: #f9fafb;
+      font-weight: 700;
+      color: #1e40af;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    th span {
+      display: block;
+      line-height: 1.2;
+    }
+    
+    th .date { font-size: 11px; color: #666; }
+    th .day { font-size: 13px; font-weight: 700; }
+    
+    .slot-cell {
+      padding: 6px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .slot {
+      width: 100%;
+      padding: 8px 4px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      word-break: break-word;
+      white-space: normal;
+      line-height: 1.3;
+    }
+    
+    .slot.free {
+      background: #e2f5ec;
+      color: #065f46;
+    }
+    
+    .slot.booked {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 2px solid #1e40af;
+    }
+    
+    .slot.unavail {
+      background: #f3f4f6;
+      color: #999;
+    }
+    
+    .time-col {
+      background: #f9fafb;
+      font-weight: 700;
+      color: #1e40af;
+      font-size: 13px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid #e5e7eb;
+      border-top: 3px solid #1e40af;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-bottom: 12px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+      .hdr h1 { font-size: 22px; }
+      .summary-stats { grid-template-columns: repeat(2, 1fr); }
+      .stat-number { font-size: 24px; }
+      thead th { font-size: 11px; }
+      th .date { font-size: 9px; }
+      .slot { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>📅 My Summer Timetable</h1>
+  <p>All lessons at a glance</p>
+</div>
+
+<div class="summary-stats" id="stats"></div>
+
+<div id="content">
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading timetable...</p>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAS34ly4yLmiw8hBWN62wg5fi8IhzPwZqI",
+  authDomain: "drjonbooking.firebaseapp.com",
+  databaseURL: "https://drjonbooking-default-rtdb.firebaseio.com",
+  projectId: "drjonbooking",
+  storageBucket: "drjonbooking.firebasestorage.app",
+  messagingSenderId: "211688494004",
+  appId: "1:211688494004:web:cae320e93861f53a59d8e1"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const weeks = [
+  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
+  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
+  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
+  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]},
+  {id:"w5",range:"27/7 – 2/8",days:[["27/7","Mon","2026-07-27"],["28/7","Tue","2026-07-28"],["29/7","Wed","2026-07-29"],["30/7","Thu","2026-07-30"],["31/7","Fri","2026-07-31"],["1/8","Sat","2026-08-01"],["2/8","Sun","2026-08-02"]]},
+  {id:"w6",range:"3/8 – 9/8",days:[["3/8","Mon","2026-08-03"],["4/8","Tue","2026-08-04"],["5/8","Wed","2026-08-05"],["6/8","Thu","2026-08-06"],["7/8","Fri","2026-08-07"],["8/8","Sat","2026-08-08"],["9/8","Sun","2026-08-09"]]},
+  {id:"w7",range:"10/8 – 16/8",days:[["10/8","Mon","2026-08-10"],["11/8","Tue","2026-08-11"],["12/8","Wed","2026-08-12"],["13/8","Thu","2026-08-13"],["14/8","Fri","2026-08-14"],["15/8","Sat","2026-08-15"],["16/8","Sun","2026-08-16"]]},
+  {id:"w8",range:"17/8 – 23/8",days:[["17/8","Mon","2026-08-17"],["18/8","Tue","2026-08-18"],["19/8","Wed","2026-08-19"],["20/8","Thu","2026-08-20"],["21/8","Fri","2026-08-21"],["22/8","Sat","2026-08-22"],["23/8","Sun","2026-08-23"]]},
+  {id:"w9",range:"24/8 – 30/8",days:[["24/8","Mon","2026-08-24"],["25/8","Tue","2026-08-25"],["26/8","Wed","2026-08-26"],["27/8","Thu","2026-08-27"],["28/8","Fri","2026-08-28"],["29/8","Sat","2026-08-29"],["30/8","Sun","2026-08-30"]]}
+];
+
+const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
+
+const dayFull = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+let allBookings = {};
+let unavailableSlots = {};
+let studentNames = {};
+
+function sid(date, time) {
+  return "s" + date.replace(/-/g, "") + time.replace(":", "");
+}
+
+function loadData() {
+  let dataLoaded = 0;
+  const totalToLoad = 3;
+  
+  function checkAllLoaded() {
+    dataLoaded++;
+    if(dataLoaded === totalToLoad) renderTimetables();
+  }
+  
+  firebase.database().ref('bookings').on('value', snap => {
+    allBookings = snap.val() || {};
+    checkAllLoaded();
+  });
+  
+  firebase.database().ref('unavailable').on('value', snap => {
+    unavailableSlots = snap.val() || {};
+    checkAllLoaded();
+  });
+  
+  firebase.database().ref('studentNames').on('value', snap => {
+    studentNames = snap.val() || {};
+    checkAllLoaded();
+  });
+}
+
+function renderStats() {
+  // Count approved bookings
+  const approvedSlots = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const uniqueStudents = new Set(Object.values(allBookings).filter(b => b.status === 'approved').map(b => b.code)).size;
+  
+  const statsHtml = `
+    <div class="stat-card">
+      <div class="stat-number">${approvedSlots}</div>
+      <div class="stat-label">Total Lessons</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${uniqueStudents}</div>
+      <div class="stat-label">Students</div>
+    </div>
+  `;
+  
+  document.getElementById('stats').innerHTML = statsHtml;
+}
+
+function renderTimetables() {
+  renderStats();
+  
+  let html = '';
+  
+  weeks.forEach(week => {
+    html += '<div class="mwrap"><table><thead><tr><th class="time-col">Time</th>';
+    
+    week.days.forEach(([dl,ds,diso]) => {
+      html += '<th><span class="date">' + dl + '</span><span class="day">' + ds + '</span></th>';
+    });
+    
+    html += '<th class="time-col">Time</th></tr></thead><tbody>';
+    
+    times.forEach(([ts, tl]) => {
+      html += '<tr><td class="time-col">' + tl + '</td>';
+      
+      week.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso, ts);
+        let slotHtml = '<div class="slot-cell">';
+        
+        const isUnavail = unavailableSlots[slotId];
+        const approvedBooking = Object.entries(allBookings).find(([k,b]) => b.slotId === slotId && b.status === 'approved');
+        
+        if(isUnavail) {
+          slotHtml += '<div class="slot unavail">—</div>';
+        } else if(approvedBooking) {
+          const code = approvedBooking[1].code;
+          const name = studentNames[code] || code;
+          slotHtml += '<div class="slot booked">' + name + '</div>';
+        } else {
+          slotHtml += '<div class="slot free">Free</div>';
+        }
+        
+        slotHtml += '</div>';
+        html += '<td>' + slotHtml + '</td>';
+      });
+      
+      html += '<td class="time-col">' + tl + '</td></tr>';
+    });
+    
+    html += '</tbody></table></div>';
+  });
+  
+  document.getElementById('content').innerHTML = html;
+}
+
+loadData();
+</script>
+
+</body>
+</html>
