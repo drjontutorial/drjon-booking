@@ -137,11 +137,27 @@ function renderStats() {
     '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Students</div></div>';
 }
 
+function getTodayISO() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+
 function renderAll() {
   renderStats();
   
+  const todayISO = getTodayISO();
+  
+  // Filter out weeks/days that are entirely in the past
+  const visibleWeeks = weeks.map(w => {
+    const visibleDays = w.days.filter(([dl,ds,diso]) => diso >= todayISO);
+    return {...w, days: visibleDays};
+  }).filter(w => w.days.length > 0);
+  
   let thead = '<tr><th style="min-width:60px">Time</th>';
-  weeks.forEach(w => {
+  visibleWeeks.forEach(w => {
     w.days.forEach(([dl,ds,diso]) => {
       const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
       thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
@@ -155,7 +171,7 @@ function renderAll() {
     tbody += '<tr>';
     tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
     
-    weeks.forEach(w => {
+    visibleWeeks.forEach(w => {
       w.days.forEach(([dl,ds,diso]) => {
         const slotId = sid(diso,ts);
         const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
