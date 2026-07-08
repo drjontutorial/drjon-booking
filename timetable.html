@@ -1,205 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dr Jon - My Timetable</title>
-  <script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-app-compat.min.js"></script>
-  <script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-database-compat.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'DM Sans', sans-serif; 
-      background: #f4f4f6; 
-      padding: 20px;
-      color: #333;
-    }
-    
-    .hdr {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #fff;
-      padding: 16px 20px;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,.06);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    
-    .hdr h1 {
-      font-size: 28px;
-      color: #1e40af;
-      margin-bottom: 8px;
-    }
-    
-    .hdr p {
-      font-size: 14px;
-      color: #999;
-    }
-    
-    .summary-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .stat-card {
-      background: #fff;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      text-align: center;
-    }
-    
-    .stat-number {
-      font-size: 32px;
-      font-weight: 700;
-      color: #1e40af;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: #666;
-      font-weight: 600;
-    }
-    
-    .mwrap {
-      margin-bottom: 20px;
-      background: #fff;
-      border-radius: 12px;
-      overflow-x: auto;
-      box-shadow: 0 4px 24px rgba(0,0,0,.06);
-      border: 1px solid #e5e7eb;
-    }
-    
-    table {
-      width: 100%;
-      min-width: 900px;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    
-    thead th, tbody td {
-      border: 1px solid #e5e7eb;
-      padding: 8px 6px;
-      height: 52px;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 12px;
-    }
-    
-    thead th {
-      background: #f9fafb;
-      font-weight: 700;
-      color: #1e40af;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    
-    th span {
-      display: block;
-      line-height: 1.2;
-    }
-    
-    th .date { font-size: 11px; color: #666; }
-    th .day { font-size: 13px; font-weight: 700; }
-    
-    .slot-cell {
-      padding: 6px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .slot {
-      width: 100%;
-      padding: 8px 4px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      text-align: center;
-      word-break: break-word;
-      white-space: normal;
-      line-height: 1.3;
-    }
-    
-    .slot.free {
-      background: #e2f5ec;
-      color: #065f46;
-    }
-    
-    .slot.booked {
-      background: #dbeafe;
-      color: #1e40af;
-      border: 2px solid #1e40af;
-    }
-    
-    .slot.unavail {
-      background: #f3f4f6;
-      color: #999;
-    }
-    
-    .time-col {
-      background: #f9fafb;
-      font-weight: 700;
-      color: #1e40af;
-      font-size: 13px;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #666;
-    }
-    
-    .loading-spinner {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      border: 3px solid #e5e7eb;
-      border-top: 3px solid #1e40af;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      margin-bottom: 12px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    @media (max-width: 768px) {
-      .hdr h1 { font-size: 22px; }
-      .summary-stats { grid-template-columns: repeat(2, 1fr); }
-      .stat-number { font-size: 24px; }
-      thead th { font-size: 11px; }
-      th .date { font-size: 9px; }
-      .slot { font-size: 11px; }
-    }
-  </style>
-</head>
-<body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr Jon - My Timetable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-<div class="hdr">
-  <h1>📅 My Summer Timetable</h1>
-  <p>All lessons at a glance</p>
-</div>
-
-<div class="summary-stats" id="stats"></div>
-
-<div id="content">
-  <div class="loading">
-    <div class="loading-spinner"></div>
-    <p>Loading timetable...</p>
-  </div>
-</div>
-
-<script>
 const firebaseConfig = {
   apiKey: "AIzaSyAS34ly4yLmiw8hBWN62wg5fi8IhzPwZqI",
   authDomain: "drjonbooking.firebaseapp.com",
@@ -210,9 +20,77 @@ const firebaseConfig = {
   appId: "1:211688494004:web:cae320e93861f53a59d8e1"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window.firebaseDB = { ref, onValue, db };
+</script>
 
+<style>
+:root{
+  --brand:#1e40af;--brand-light:#e0e7ff;--bg:#f8fafc;--card:#fff;
+  --green:#0891b2;--green-bg:#e0f2fe;--green-dark:#164e63;
+  --line:#e2e8f0;--ink:#0f172a;--muted:#64748b;
+  --warning:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);padding:20px}
+.container{max-width:1200px;margin:0 auto}
+h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--brand);margin-bottom:6px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.stat-card .number{font-size:28px;font-weight:800;color:var(--brand);margin-bottom:4px}
+.stat-card .label{font-size:12px;color:var(--muted);font-weight:600}
+
+.booking-table{background:var(--card);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid var(--line);overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead th{border:1px solid var(--line);padding:12px 8px;background:#f1f5f9;font-weight:800;font-size:12px;height:60px;vertical-align:middle}
+thead th span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+tbody td{border:1px solid var(--line);padding:4px;text-align:center;height:60px;vertical-align:middle}
+
+th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
+
+.time-header{position:sticky;right:0;z-index:3;background:var(--brand-light)!important;color:var(--brand);font-weight:800;font-size:11px;border-left:2px solid var(--brand)!important;min-width:60px}
+.time-cell{position:sticky;right:0;z-index:2;background:#f0f4ff;color:var(--brand);font-weight:800;font-size:12px;border-left:2px solid var(--brand)!important;min-width:60px}
+
+.slot-btn{display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--green-bg);color:var(--green-dark);font-weight:700;font-size:11px;border-radius:6px;border:none;cursor:default;width:calc(100% - 8px);margin:4px;font-family:'DM Sans',sans-serif}
+.slot-btn.booked{background:#000;color:#fff;font-weight:600}
+.slot-btn.unavailable{background:#000;color:#fff}
+.slot-btn.reserved{background:#8b5cf6;color:#fff;font-weight:600}
+.slot-btn.student{font-weight:600}
+
+.loading{text-align:center;padding:60px;color:var(--muted)}
+.loading-spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--line);border-top:3px solid var(--brand);border-radius:50%;animation:spin .6s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:768px){
+  h1{font-size:22px}
+  thead th{font-size:11px}
+  thead th span{font-size:9px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📅 Dr Jon — My Timetable</h1>
+  <div class="subtitle">Live view — read only</div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="booking-table">
+    <table id="requestTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody">
+        <tr><td colspan="99"><div class="loading"><div class="loading-spinner"></div><p>Loading timetable...</p></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
 const weeks = [
   {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
   {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
@@ -227,108 +105,100 @@ const weeks = [
 
 const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
 
-const dayFull = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const dayFull = {"Mon":"Monday","Tue":"Tuesday","Wed":"Wednesday","Thu":"Thursday","Fri":"Friday","Sat":"Saturday","Sun":"Sunday"};
+
+const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
+
+function getColorForCode(code) {
+  if(!code) return colors26[0];
+  const firstLetter = code.toUpperCase().charCodeAt(0) - 65;
+  return colors26[((firstLetter % 26) + 26) % 26];
+}
 
 let allBookings = {};
 let unavailableSlots = {};
 let studentNames = {};
+let loadedBookings = false, loadedUnavail = false, loadedNames = false;
 
 function sid(date, time) {
   return "s" + date.replace(/-/g, "") + time.replace(":", "");
 }
 
-function loadData() {
-  let dataLoaded = 0;
-  const totalToLoad = 3;
-  
-  function checkAllLoaded() {
-    dataLoaded++;
-    if(dataLoaded === totalToLoad) renderTimetables();
-  }
-  
-  firebase.database().ref('bookings').on('value', snap => {
-    allBookings = snap.val() || {};
-    checkAllLoaded();
-  });
-  
-  firebase.database().ref('unavailable').on('value', snap => {
-    unavailableSlots = snap.val() || {};
-    checkAllLoaded();
-  });
-  
-  firebase.database().ref('studentNames').on('value', snap => {
-    studentNames = snap.val() || {};
-    checkAllLoaded();
-  });
+function maybeRender() {
+  if(loadedBookings && loadedUnavail && loadedNames) renderAll();
 }
 
 function renderStats() {
-  // Count approved bookings
-  const approvedSlots = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
   const uniqueStudents = new Set(Object.values(allBookings).filter(b => b.status === 'approved').map(b => b.code)).size;
   
-  const statsHtml = `
-    <div class="stat-card">
-      <div class="stat-number">${approvedSlots}</div>
-      <div class="stat-label">Total Lessons</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">${uniqueStudents}</div>
-      <div class="stat-label">Students</div>
-    </div>
-  `;
-  
-  document.getElementById('stats').innerHTML = statsHtml;
+  document.getElementById('stats').innerHTML =
+    '<div class="stat-card"><div class="number">' + approved + '</div><div class="label">Total Lessons</div></div>' +
+    '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Students</div></div>';
 }
 
-function renderTimetables() {
+function renderAll() {
   renderStats();
   
-  let html = '';
-  
-  weeks.forEach(week => {
-    html += '<div class="mwrap"><table><thead><tr><th class="time-col">Time</th>';
-    
-    week.days.forEach(([dl,ds,diso]) => {
-      html += '<th><span class="date">' + dl + '</span><span class="day">' + ds + '</span></th>';
+  let thead = '<tr><th style="min-width:60px">Time</th>';
+  weeks.forEach(w => {
+    w.days.forEach(([dl,ds,diso]) => {
+      const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
     });
+  });
+  thead += '<th class="time-header">Time</th></tr>';
+  document.getElementById('tableHead').innerHTML = thead;
+  
+  let tbody = '';
+  times.forEach(([ts,tl]) => {
+    tbody += '<tr>';
+    tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
     
-    html += '<th class="time-col">Time</th></tr></thead><tbody>';
-    
-    times.forEach(([ts, tl]) => {
-      html += '<tr><td class="time-col">' + tl + '</td>';
-      
-      week.days.forEach(([dl,ds,diso]) => {
-        const slotId = sid(diso, ts);
-        let slotHtml = '<div class="slot-cell">';
-        
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
         const isUnavail = unavailableSlots[slotId];
-        const approvedBooking = Object.entries(allBookings).find(([k,b]) => b.slotId === slotId && b.status === 'approved');
+        const isReserved = isUnavail && isUnavail.reserved;
+        const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
         
-        if(isUnavail) {
-          slotHtml += '<div class="slot unavail">—</div>';
-        } else if(approvedBooking) {
+        const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+        
+        let btn = '';
+        if(approvedBooking) {
           const code = approvedBooking[1].code;
-          const name = studentNames[code] || code;
-          slotHtml += '<div class="slot booked">' + name + '</div>';
+          const color = getColorForCode(code);
+          const displayText = studentNames[code] || code;
+          btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + displayText + '</button>';
+        } else if(isReserved) {
+          btn = '<button class="slot-btn reserved">Reserved</button>';
+        } else if(isUnavail) {
+          btn = '<button class="slot-btn unavailable">Unavail</button>';
         } else {
-          slotHtml += '<div class="slot free">Free</div>';
+          btn = '<button class="slot-btn">Free</button>';
         }
         
-        slotHtml += '</div>';
-        html += '<td>' + slotHtml + '</td>';
+        tbody += '<td class="' + hasSep + '">' + btn + '</td>';
       });
-      
-      html += '<td class="time-col">' + tl + '</td></tr>';
     });
     
-    html += '</tbody></table></div>';
+    tbody += '<td class="time-cell">' + tl + '</td></tr>';
   });
   
-  document.getElementById('content').innerHTML = html;
+  document.getElementById('tableBody').innerHTML = tbody;
 }
 
-loadData();
+function init() {
+  if(!window.firebaseDB) { setTimeout(init, 100); return; }
+  const {ref, onValue, db} = window.firebaseDB;
+  
+  onValue(ref(db,'bookings'), snap => { allBookings = snap.val() || {}; loadedBookings = true; maybeRender(); });
+  onValue(ref(db,'unavailable'), snap => { unavailableSlots = snap.val() || {}; loadedUnavail = true; maybeRender(); });
+  onValue(ref(db,'studentNames'), snap => { studentNames = snap.val() || {}; loadedNames = true; maybeRender(); });
+}
+
+init();
 </script>
 
 </body>
