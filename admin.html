@@ -242,6 +242,7 @@ let lastLoginTime = Date.now();
 let pendingAction = null;
 let showingHistory = false;
 let currentLookupCode = '';
+let needsScrollToToday = false;
 
 const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
 
@@ -667,6 +668,7 @@ function switchTab(tab) {
   event.target.classList.add('active');
   
   if(tab === 'all') {
+    needsScrollToToday = true;
     // Reload studentNames from Firebase
     if(!window.firebaseDB) return;
     const {ref,onValue,db:fbdb} = window.firebaseDB;
@@ -890,7 +892,7 @@ function renderAllRequestsTable() {
   weeks.forEach(w => {
     w.days.forEach(([dl,ds,diso],di) => {
       const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
-      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
+      thead += '<th id="col-' + diso + '" class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
     });
   });
   thead += '<th class="time-header">Time</th></tr>';
@@ -937,6 +939,35 @@ function renderAllRequestsTable() {
   });
   
   document.getElementById('tableBody').innerHTML = tbody;
+
+  if(needsScrollToToday) {
+    needsScrollToToday = false;
+    setTimeout(scrollToToday, 0);
+  }
+}
+
+function getTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function scrollToToday() {
+  const todayISO = getTodayISO();
+  let allDays = [];
+  weeks.forEach(w => w.days.forEach(([dl,ds,diso]) => allDays.push(diso)));
+
+  // today if in range, else the next upcoming date, else the last available date
+  let target = allDays.find(d => d === todayISO) || allDays.find(d => d > todayISO) || allDays[allDays.length-1];
+
+  const el = document.getElementById('col-' + target);
+  const container = document.querySelector('#allTab .booking-table');
+  if(!el || !container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  const stickyTimeColWidth = 60;
+  const offset = container.scrollLeft + (elRect.left - containerRect.left) - stickyTimeColWidth;
+  container.scrollLeft = Math.max(0, offset);
 }
 
 function updateStats() {
