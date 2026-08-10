@@ -278,6 +278,33 @@ function sid(diso, tstr) {
   return "s" + diso.replace(/-/g,"") + tstr.replace(/:/g,"");
 }
 
+function getTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function hidePastWeeks() {
+  const todayISO = getTodayISO();
+  let firstVisibleId = null;
+
+  weeks.forEach(w => {
+    const lastDay = w.days[w.days.length-1][2];
+    const isPast = lastDay < todayISO;
+    const label = document.querySelector('.wtab.tab-' + w.id);
+    const radio = document.getElementById('tab-' + w.id);
+    if(label) label.style.display = isPast ? 'none' : '';
+    if(radio) radio.disabled = isPast;
+    if(!isPast && firstVisibleId === null) firstVisibleId = w.id;
+  });
+
+  // If the currently-checked week got hidden (fully passed), jump to the first upcoming/current week
+  const checked = document.querySelector('input[name="week"]:checked');
+  if(firstVisibleId && (!checked || checked.disabled)) {
+    const target = document.getElementById('tab-' + firstVisibleId);
+    if(target) target.checked = true;
+  }
+}
+
 function getDayLabel(diso) {
   for(let w of weeks) {
     for(let [dl,ds,diso2] of w.days) {
@@ -544,6 +571,7 @@ function showMsg(text,cls='') {
 
 generateCodes();
 generateHTML();
+hidePastWeeks();
 updateCounters();
 updateSummary();
 console.log("App ready");
