@@ -57,6 +57,8 @@ header{
 
 .weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 0 10px}
 .wtab{display:block;border:1.5px solid var(--line);background:#faf9fb;border-radius:12px;padding:8px 5px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.wtab.past{background:#e5e7eb;color:#9ca3af;cursor:not-allowed;pointer-events:none;opacity:.6}
+.wtab.past b,.wtab.past span{color:#9ca3af}
 .wtab b{display:block;font-size:13px;font-weight:800}
 .wtab>span:not(.wk-count){display:block;font-size:10px;color:var(--muted);margin-top:1px}
 .wk-count{display:none;position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;border-radius:50px;font-size:10px;font-weight:900;padding:2px 6px;border:2px solid var(--bg)}
@@ -292,7 +294,7 @@ function hidePastWeeks() {
     const isPast = lastDay < todayISO;
     const label = document.querySelector('.wtab.tab-' + w.id);
     const radio = document.getElementById('tab-' + w.id);
-    if(label) label.style.display = isPast ? 'none' : '';
+    if(label) label.classList.toggle('past', isPast);
     if(radio) radio.disabled = isPast;
     if(!isPast && firstVisibleId === null) firstVisibleId = w.id;
   });
