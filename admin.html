@@ -587,8 +587,11 @@ function adminBookSlot(slotId, diso, ts) {
     status: 'approved',
     ts: Date.now(),
     bookedByAdmin: true
+  }).then(() => {
+    const dayInfo = getDayLabel(diso);
+    alert('✅ Booked ' + dayInfo.day + ' ' + dayInfo.date + ' at ' + ts + ' for ' + bookingModeCode);
   }).catch(err => {
-    alert('Error booking slot');
+    alert('❌ Error booking slot: ' + err.message);
     console.error(err);
   });
 }
