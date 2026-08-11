@@ -573,9 +573,28 @@ function toggleBookingMode() {
 }
 
 function adminBookSlot(slotId, diso, ts) {
-  if(!bookingModeActive || !bookingModeCode) return;
-  if(!window.firebaseDB) return;
+  console.log('adminBookSlot called:', {slotId, diso, ts, bookingModeActive, bookingModeCode, firebaseAvail: !!window.firebaseDB});
+
+  if(!bookingModeActive) {
+    console.warn('Booking mode not active');
+    alert('⚠️ Booking mode not active');
+    return;
+  }
+
+  if(!bookingModeCode) {
+    console.warn('No booking code set');
+    alert('⚠️ No student code selected');
+    return;
+  }
+
+  if(!window.firebaseDB) {
+    console.warn('Firebase not available');
+    alert('⚠️ Firebase not ready');
+    return;
+  }
+
   const {ref,push,db:fbdb} = window.firebaseDB;
+  console.log('Firebase available, pushing booking...');
 
   push(ref(fbdb,'bookings'), {
     slotId: slotId,
@@ -587,12 +606,13 @@ function adminBookSlot(slotId, diso, ts) {
     status: 'approved',
     ts: Date.now(),
     bookedByAdmin: true
-  }).then(() => {
+  }).then(result => {
+    console.log('✅ Booking pushed successfully:', result.key);
     const dayInfo = getDayLabel(diso);
     alert('✅ Booked ' + dayInfo.day + ' ' + dayInfo.date + ' at ' + ts + ' for ' + bookingModeCode);
   }).catch(err => {
-    alert('❌ Error booking slot: ' + err.message);
-    console.error(err);
+    console.error('❌ Firebase error:', err);
+    alert('❌ Error booking slot: ' + (err.message || err));
   });
 }
 
