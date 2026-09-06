@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dr Jon - My Timetable</title>
+<title>Dr Jon - My Regular Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
 <script type="module">
@@ -56,9 +56,6 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 .time-cell{position:sticky;right:0;z-index:2;background:#f0f4ff;color:var(--brand);font-weight:800;font-size:12px;border-left:2px solid var(--brand)!important;min-width:60px}
 
 .slot-btn{display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--green-bg);color:var(--green-dark);font-weight:700;font-size:11px;border-radius:6px;border:none;cursor:default;width:calc(100% - 8px);margin:4px;font-family:'DM Sans',sans-serif}
-.slot-btn.booked{background:#000;color:#fff;font-weight:600}
-.slot-btn.unavailable{background:#000;color:#fff}
-.slot-btn.reserved{background:#8b5cf6;color:#fff;font-weight:600}
 .slot-btn.student{font-weight:600}
 
 .loading{text-align:center;padding:60px;color:var(--muted)}
@@ -75,8 +72,8 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 <body>
 
 <div class="container">
-  <h1>📅 Dr Jon — My Timetable</h1>
-  <div class="subtitle">Live view — read only</div>
+  <h1>📅 Dr Jon — My Regular Timetable</h1>
+  <div class="subtitle">Live view — read only — recurring weekly schedule</div>
 
   <div class="stats" id="stats"></div>
 
@@ -91,133 +88,75 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 </div>
 
 <script>
-const weeks = [
-  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
-  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
-  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
-  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]},
-  {id:"w5",range:"27/7 – 2/8",days:[["27/7","Mon","2026-07-27"],["28/7","Tue","2026-07-28"],["29/7","Wed","2026-07-29"],["30/7","Thu","2026-07-30"],["31/7","Fri","2026-07-31"],["1/8","Sat","2026-08-01"],["2/8","Sun","2026-08-02"]]},
-  {id:"w6",range:"3/8 – 9/8",days:[["3/8","Mon","2026-08-03"],["4/8","Tue","2026-08-04"],["5/8","Wed","2026-08-05"],["6/8","Thu","2026-08-06"],["7/8","Fri","2026-08-07"],["8/8","Sat","2026-08-08"],["9/8","Sun","2026-08-09"]]},
-  {id:"w7",range:"10/8 – 16/8",days:[["10/8","Mon","2026-08-10"],["11/8","Tue","2026-08-11"],["12/8","Wed","2026-08-12"],["13/8","Thu","2026-08-13"],["14/8","Fri","2026-08-14"],["15/8","Sat","2026-08-15"],["16/8","Sun","2026-08-16"]]},
-  {id:"w8",range:"17/8 – 23/8",days:[["17/8","Mon","2026-08-17"],["18/8","Tue","2026-08-18"],["19/8","Wed","2026-08-19"],["20/8","Thu","2026-08-20"],["21/8","Fri","2026-08-21"],["22/8","Sat","2026-08-22"],["23/8","Sun","2026-08-23"]]},
-  {id:"w9",range:"24/8 – 30/8",days:[["24/8","Mon","2026-08-24"],["25/8","Tue","2026-08-25"],["26/8","Wed","2026-08-26"],["27/8","Thu","2026-08-27"],["28/8","Fri","2026-08-28"],["29/8","Sat","2026-08-29"],["30/8","Sun","2026-08-30"]]},
-  {id:"w10",range:"31/8 – 6/9",days:[["31/8","Mon","2026-08-31"],["1/9","Tue","2026-09-01"],["2/9","Wed","2026-09-02"],["3/9","Thu","2026-09-03"],["4/9","Fri","2026-09-04"],["5/9","Sat","2026-09-05"],["6/9","Sun","2026-09-06"]]}
-];
-
+const regularDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
 
 const dayFull = {"Mon":"Monday","Tue":"Tuesday","Wed":"Wednesday","Thu":"Thursday","Fri":"Friday","Sat":"Saturday","Sun":"Sunday"};
 
 const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
 
-function getColorForCode(code) {
-  if(!code) return colors26[0];
-  const firstLetter = code.toUpperCase().charCodeAt(0) - 65;
+function getColorForName(name) {
+  if(!name) return colors26[0];
+  const firstLetter = name.toUpperCase().charCodeAt(0) - 65;
   return colors26[((firstLetter % 26) + 26) % 26];
 }
 
-let allBookings = {};
-let unavailableSlots = {};
-let studentNames = {};
 let regularTimetable = {};
-let weekOverrideFree = {};
-let loadedBookings = false, loadedUnavail = false, loadedNames = false, loadedRegular = false, loadedOverride = false;
-
-function sid(date, time) {
-  return "s" + date.replace(/-/g, "") + time.replace(":", "");
-}
-
-function maybeRender() {
-  if(loadedBookings && loadedUnavail && loadedNames && loadedRegular && loadedOverride) renderAll();
-}
+let loadedRegular = false;
 
 function renderStats() {
-  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
-  const uniqueStudents = new Set(Object.values(allBookings).filter(b => b.status === 'approved').map(b => b.code)).size;
-  
-  document.getElementById('stats').innerHTML =
-    '<div class="stat-card"><div class="number">' + approved + '</div><div class="label">Total Lessons</div></div>' +
-    '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Students</div></div>';
-}
+  const entries = Object.values(regularTimetable);
+  const totalSlots = entries.length;
+  const uniqueStudents = new Set(entries).size;
 
-function getTodayISO() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  const dd = String(now.getDate()).padStart(2,'0');
-  return yyyy + '-' + mm + '-' + dd;
+  document.getElementById('stats').innerHTML =
+    '<div class="stat-card"><div class="number">' + totalSlots + '</div><div class="label">Weekly Lesson Slots</div></div>' +
+    '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Regular Students</div></div>';
 }
 
 function renderAll() {
   renderStats();
-  
-  const todayISO = getTodayISO();
-  
-  // Filter out weeks/days that are entirely in the past
-  const visibleWeeks = weeks.map(w => {
-    const visibleDays = w.days.filter(([dl,ds,diso]) => diso >= todayISO);
-    return {...w, days: visibleDays};
-  }).filter(w => w.days.length > 0);
-  
+
   let thead = '<tr><th style="min-width:60px">Time</th>';
-  visibleWeeks.forEach(w => {
-    w.days.forEach(([dl,ds,diso]) => {
-      const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
-      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
-    });
+  regularDays.forEach(d => {
+    const hasSep = (d === 'Sat') ? 'sun-sep' : '';
+    thead += '<th class="' + hasSep + '"><b>' + d + '</b><span>' + dayFull[d] + '</span></th>';
   });
   thead += '<th class="time-header">Time</th></tr>';
   document.getElementById('tableHead').innerHTML = thead;
-  
+
   let tbody = '';
   times.forEach(([ts,tl]) => {
     tbody += '<tr>';
     tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
-    
-    visibleWeeks.forEach(w => {
-      w.days.forEach(([dl,ds,diso]) => {
-        const slotId = sid(diso,ts);
-        const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
-        const isUnavail = unavailableSlots[slotId];
-        const isReserved = isUnavail && isUnavail.reserved;
-        const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
-        const isRegularlyClosed = !!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId];
 
-        const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+    regularDays.forEach(d => {
+      const key = d + '_' + ts;
+      const name = regularTimetable[key];
+      const hasSep = (d === 'Sat') ? 'sun-sep' : '';
 
-        let btn = '';
-        if(approvedBooking) {
-          const code = approvedBooking[1].code;
-          const color = getColorForCode(code);
-          const displayText = studentNames[code] || code;
-          btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + displayText + '</button>';
-        } else if(isReserved) {
-          btn = '<button class="slot-btn reserved">Reserved</button>';
-        } else if(isUnavail || isRegularlyClosed) {
-          btn = '<button class="slot-btn unavailable">Unavail</button>';
-        } else {
-          btn = '<button class="slot-btn">Free</button>';
-        }
-        
-        tbody += '<td class="' + hasSep + '">' + btn + '</td>';
-      });
+      let btn = '';
+      if(name) {
+        const color = getColorForName(name);
+        btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + name + '</button>';
+      } else {
+        btn = '<button class="slot-btn">Free</button>';
+      }
+
+      tbody += '<td class="' + hasSep + '">' + btn + '</td>';
     });
-    
+
     tbody += '<td class="time-cell">' + tl + '</td></tr>';
   });
-  
+
   document.getElementById('tableBody').innerHTML = tbody;
 }
 
 function init() {
   if(!window.firebaseDB) { setTimeout(init, 100); return; }
   const {ref, onValue, db} = window.firebaseDB;
-  
-  onValue(ref(db,'bookings'), snap => { allBookings = snap.val() || {}; loadedBookings = true; maybeRender(); });
-  onValue(ref(db,'unavailable'), snap => { unavailableSlots = snap.val() || {}; loadedUnavail = true; maybeRender(); });
-  onValue(ref(db,'studentNames'), snap => { studentNames = snap.val() || {}; loadedNames = true; maybeRender(); });
-  onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; maybeRender(); });
-  onValue(ref(db,'weekOverrideFree'), snap => { weekOverrideFree = snap.val() || {}; loadedOverride = true; maybeRender(); });
+
+  onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; renderAll(); });
 }
 
 init();
