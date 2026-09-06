@@ -848,9 +848,9 @@ function renderRegularTab() {
     tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
     regularDays.forEach(d => {
       const key = d + '_' + ts;
-      const isBlocked = !!regularTimetable[key];
-      const btn = isBlocked
-        ? '<button class="slot-btn regular-blocked" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">Unavailable</button>'
+      const label = regularTimetable[key];
+      const btn = label
+        ? '<button class="slot-btn regular-blocked" title="Click to clear" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">' + label + '</button>'
         : '<button class="slot-btn regular-free" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">Free</button>';
       tbody += '<td>' + btn + '</td>';
     });
@@ -866,7 +866,9 @@ function toggleRegularSlot(dow, ts) {
   if(regularTimetable[key]) {
     set(ref(fbdb,'regularTimetable/'+key), null);
   } else {
-    set(ref(fbdb,'regularTimetable/'+key), true);
+    const name = prompt('Which student regularly has this slot? (leave blank to just mark it unavailable)');
+    if(name === null) return; // cancelled
+    set(ref(fbdb,'regularTimetable/'+key), name.trim() || 'Unavailable');
   }
 }
 
@@ -1124,7 +1126,8 @@ function renderAllRequestsTable() {
         } else if(isUnavail) {
           btn = '<button class="slot-btn unavailable" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Unavail</button>';
         } else if(!!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId]) {
-          btn = '<button class="slot-btn regular-closed" title="Closed by your regular timetable — click to open just this date" onclick="openThisWeekOnly(' + "'" + slotId + "'" + ')">🔒 Closed</button>';
+          const regularName = regularTimetable[ds+'_'+ts];
+          btn = '<button class="slot-btn regular-closed" title="Regularly ' + regularName + ' — click to open just this date" onclick="openThisWeekOnly(' + "'" + slotId + "'" + ')">🔒 ' + regularName + '</button>';
         } else if(bookingModeActive) {
           btn = '<button class="slot-btn book-mode" title="Book for ' + bookingModeCode + '" onclick="adminBookSlot(' + "'" + slotId + "'" + ', ' + "'" + diso + "'" + ', ' + "'" + ts + "'" + ')">➕ Book</button>';
         } else {
