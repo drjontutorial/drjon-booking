@@ -243,6 +243,8 @@ let VALID_CODES = [];
 let db = null;
 let allBookings = {};
 let unavailableSlots = {};
+let regularTimetable = {};
+let weekOverrideFree = {};
 let userIP = 'unknown';
 let autoTzDetected = false;
 
@@ -322,7 +324,7 @@ function generateHTML() {
     w.days.forEach(([dl,ds,diso]) => {
       times.forEach(([ts,tl]) => {
         const id = sid(diso,ts);
-        cbHTML += '<input type="checkbox" id="' + id + '" class="chk bc" data-date="' + diso + '" data-dl="' + dl + '" data-day="' + dayFull[ds] + '" data-time="' + ts + '" data-tl="' + tl + '" data-week="' + w.range + '">';
+        cbHTML += '<input type="checkbox" id="' + id + '" class="chk bc" data-date="' + diso + '" data-dl="' + dl + '" data-day="' + dayFull[ds] + '" data-dow="' + ds + '" data-time="' + ts + '" data-tl="' + tl + '" data-week="' + w.range + '">';
       });
     });
   });
@@ -484,6 +486,16 @@ function loadFirebaseData() {
     unavailableSlots = snap.val() || {};
     updateSlotStatus();
   });
+
+  onValue(ref(db,'regularTimetable'), snap => {
+    regularTimetable = snap.val() || {};
+    updateSlotStatus();
+  });
+
+  onValue(ref(db,'weekOverrideFree'), snap => {
+    weekOverrideFree = snap.val() || {};
+    updateSlotStatus();
+  });
 }
 
 function updateSlotStatus() {
@@ -495,8 +507,14 @@ function updateSlotStatus() {
     
     const hasApproved = Object.values(allBookings).some(b => b.slotId === c.id && b.status === 'approved');
     const hasPending = Object.values(allBookings).some(b => b.slotId === c.id && b.status === 'pending');
-    
+    const isRegularlyClosed = !!regularTimetable[c.dataset.dow+'_'+c.dataset.time] && !weekOverrideFree[c.id];
+
     if(unavailableSlots[c.id]) {
+      lbl.classList.add('unavailable');
+      lbl.innerHTML = 'Unavailable';
+      c.disabled = true;
+    }
+    else if(isRegularlyClosed) {
       lbl.classList.add('unavailable');
       lbl.innerHTML = 'Unavailable';
       c.disabled = true;

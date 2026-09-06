@@ -119,14 +119,16 @@ function getColorForCode(code) {
 let allBookings = {};
 let unavailableSlots = {};
 let studentNames = {};
-let loadedBookings = false, loadedUnavail = false, loadedNames = false;
+let regularTimetable = {};
+let weekOverrideFree = {};
+let loadedBookings = false, loadedUnavail = false, loadedNames = false, loadedRegular = false, loadedOverride = false;
 
 function sid(date, time) {
   return "s" + date.replace(/-/g, "") + time.replace(":", "");
 }
 
 function maybeRender() {
-  if(loadedBookings && loadedUnavail && loadedNames) renderAll();
+  if(loadedBookings && loadedUnavail && loadedNames && loadedRegular && loadedOverride) renderAll();
 }
 
 function renderStats() {
@@ -179,9 +181,10 @@ function renderAll() {
         const isUnavail = unavailableSlots[slotId];
         const isReserved = isUnavail && isUnavail.reserved;
         const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
-        
+        const isRegularlyClosed = !!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId];
+
         const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
-        
+
         let btn = '';
         if(approvedBooking) {
           const code = approvedBooking[1].code;
@@ -190,7 +193,7 @@ function renderAll() {
           btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + displayText + '</button>';
         } else if(isReserved) {
           btn = '<button class="slot-btn reserved">Reserved</button>';
-        } else if(isUnavail) {
+        } else if(isUnavail || isRegularlyClosed) {
           btn = '<button class="slot-btn unavailable">Unavail</button>';
         } else {
           btn = '<button class="slot-btn">Free</button>';
@@ -213,6 +216,8 @@ function init() {
   onValue(ref(db,'bookings'), snap => { allBookings = snap.val() || {}; loadedBookings = true; maybeRender(); });
   onValue(ref(db,'unavailable'), snap => { unavailableSlots = snap.val() || {}; loadedUnavail = true; maybeRender(); });
   onValue(ref(db,'studentNames'), snap => { studentNames = snap.val() || {}; loadedNames = true; maybeRender(); });
+  onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; maybeRender(); });
+  onValue(ref(db,'weekOverrideFree'), snap => { weekOverrideFree = snap.val() || {}; loadedOverride = true; maybeRender(); });
 }
 
 init();

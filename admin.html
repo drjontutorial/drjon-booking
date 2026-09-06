@@ -119,6 +119,12 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 .slot-btn.student{cursor:pointer;font-weight:600}
 .slot-btn.book-mode{background:#f59e0b;color:#fff;cursor:pointer;font-weight:700}
 .slot-btn.book-mode:hover{background:#d97706;transform:scale(1.05)}
+.slot-btn.regular-closed{background:#cbd5e1;color:#475569;cursor:pointer;font-weight:600;border:1.5px dashed #94a3b8}
+.slot-btn.regular-closed:hover{background:#b6c2d1}
+.slot-btn.regular-free{background:#e5e7eb;color:#475569;cursor:pointer;font-weight:600}
+.slot-btn.regular-free:hover{background:#d1d5db}
+.slot-btn.regular-blocked{background:#475569;color:#fff;cursor:pointer;font-weight:600}
+.slot-btn.regular-blocked:hover{background:#334155}
 
 .conflict-warning{background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px;margin:12px 0;font-size:12px;color:#991b1b;font-weight:600}
 
@@ -158,6 +164,7 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('new')">New Requests</button>
       <button class="tab-btn" onclick="switchTab('all')">All Requests</button>
+      <button class="tab-btn" onclick="switchTab('regular')">🗓️ Regular Timetable</button>
     </div>
 
     <div id="newTab">
@@ -219,6 +226,29 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
         </table>
       </div>
     </div>
+
+    <div id="regularTab" style="display:none">
+      <div class="book-for-panel" style="border-color:var(--brand)">
+        <h3>🗓️ Your Regular Weekly Timetable</h3>
+        <p style="font-size:12px;color:var(--muted);margin:0 0 8px">
+          This is your recurring weekly pattern — click a box to toggle it, and it applies to <b>every current and future week</b> automatically. It does <b>not</b> change anything already booked.
+        </p>
+        <p style="font-size:12px;color:var(--ink);margin:0 0 8px">
+          <span style="display:inline-block;width:14px;height:14px;background:#e5e7eb;border-radius:3px;vertical-align:middle;margin-right:4px"></span>Grey = Free (bookable by default)
+          &nbsp;&nbsp;
+          <span style="display:inline-block;width:14px;height:14px;background:#475569;border-radius:3px;vertical-align:middle;margin-right:4px"></span>Dark = Regularly unavailable
+        </p>
+        <p style="font-size:12px;color:var(--muted);margin:0">
+          Need a change for just <b>one specific week</b> (a one-off, without touching this pattern)? Do it on the <b>All Requests</b> tab instead — any click there only ever affects that single date. A regularly-blocked slot shows there as "🔒 Closed"; click it to open just that date.
+        </p>
+      </div>
+      <div class="booking-table">
+        <table id="regularTable">
+          <thead id="regularTableHead"></thead>
+          <tbody id="regularTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -258,6 +288,9 @@ let currentLookupCode = '';
 let needsScrollToToday = false;
 let bookingModeActive = false;
 let bookingModeCode = '';
+let regularTimetable = {};
+let weekOverrideFree = {};
+const regularDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
 
@@ -315,6 +348,17 @@ function loadData() {
   onValue(ref(db,'studentNames'), snap => {
     studentNames = snap.val() || {};
     renderNewRequests();
+  });
+
+  onValue(ref(db,'regularTimetable'), snap => {
+    regularTimetable = snap.val() || {};
+    renderAllRequestsTable();
+    renderRegularTab();
+  });
+
+  onValue(ref(db,'weekOverrideFree'), snap => {
+    weekOverrideFree = snap.val() || {};
+    renderAllRequestsTable();
   });
 }
 
@@ -765,9 +809,10 @@ function resetMatrixHighlight() {
 function switchTab(tab) {
   document.getElementById('newTab').style.display = tab==='new'?'block':'none';
   document.getElementById('allTab').style.display = tab==='all'?'block':'none';
+  document.getElementById('regularTab').style.display = tab==='regular'?'block':'none';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
-  
+
   if(tab === 'all') {
     needsScrollToToday = true;
     // Reload studentNames from Firebase
@@ -779,6 +824,56 @@ function switchTab(tab) {
       renderAllRequestsTable();
     });
   }
+
+  if(tab === 'regular') {
+    renderRegularTab();
+  }
+}
+
+function renderRegularTab() {
+  const head = document.getElementById('regularTableHead');
+  const body = document.getElementById('regularTableBody');
+  if(!head || !body) return;
+
+  let thead = '<tr><th style="min-width:60px">Time</th>';
+  regularDays.forEach(d => {
+    thead += '<th><b>' + d + '</b><span>' + dayFull[d] + '</span></th>';
+  });
+  thead += '</tr>';
+  head.innerHTML = thead;
+
+  let tbody = '';
+  times.forEach(([ts,tl]) => {
+    tbody += '<tr>';
+    tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
+    regularDays.forEach(d => {
+      const key = d + '_' + ts;
+      const isBlocked = !!regularTimetable[key];
+      const btn = isBlocked
+        ? '<button class="slot-btn regular-blocked" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">Unavailable</button>'
+        : '<button class="slot-btn regular-free" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">Free</button>';
+      tbody += '<td>' + btn + '</td>';
+    });
+    tbody += '</tr>';
+  });
+  body.innerHTML = tbody;
+}
+
+function toggleRegularSlot(dow, ts) {
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  const key = dow + '_' + ts;
+  if(regularTimetable[key]) {
+    set(ref(fbdb,'regularTimetable/'+key), null);
+  } else {
+    set(ref(fbdb,'regularTimetable/'+key), true);
+  }
+}
+
+function openThisWeekOnly(slotId) {
+  if(!window.firebaseDB) return;
+  const {ref,set,db:fbdb} = window.firebaseDB;
+  set(ref(fbdb,'weekOverrideFree/'+slotId), true);
 }
 
 function toggleHistory() {
@@ -1028,6 +1123,8 @@ function renderAllRequestsTable() {
           btn = '<button class="slot-btn reserved" onclick="toggleReserved(' + "'" + slotId + "'" + ')">Reserved</button>';
         } else if(isUnavail) {
           btn = '<button class="slot-btn unavailable" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Unavail</button>';
+        } else if(!!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId]) {
+          btn = '<button class="slot-btn regular-closed" title="Closed by your regular timetable — click to open just this date" onclick="openThisWeekOnly(' + "'" + slotId + "'" + ')">🔒 Closed</button>';
         } else if(bookingModeActive) {
           btn = '<button class="slot-btn book-mode" title="Book for ' + bookingModeCode + '" onclick="adminBookSlot(' + "'" + slotId + "'" + ', ' + "'" + diso + "'" + ', ' + "'" + ts + "'" + ')">➕ Book</button>';
         } else {
