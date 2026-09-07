@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dr Jon - My Regular Timetable</title>
+<title>Dr Jon - My Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
 <script type="module">
@@ -56,7 +56,14 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 .time-cell{position:sticky;right:0;z-index:2;background:#f0f4ff;color:var(--brand);font-weight:800;font-size:12px;border-left:2px solid var(--brand)!important;min-width:60px}
 
 .slot-btn{display:flex;align-items:center;justify-content:center;min-height:52px;background:var(--green-bg);color:var(--green-dark);font-weight:700;font-size:11px;border-radius:6px;border:none;cursor:default;width:calc(100% - 8px);margin:4px;font-family:'DM Sans',sans-serif}
+.slot-btn.unavailable{background:#000;color:#fff}
+.slot-btn.reserved{background:#8b5cf6;color:#fff;font-weight:600}
+.slot-btn.pending{background:#fef08a;color:#92400e;font-weight:600}
 .slot-btn.student{font-weight:600}
+.slot-btn.regular-closed{font-weight:600;border:1.5px dashed rgba(255,255,255,.6)}
+
+.note-badge{position:absolute;top:2px;right:2px;z-index:5;width:16px;height:16px;line-height:16px;text-align:center;font-size:10px;border-radius:50%;background:#fef3c7;border:1px solid #f59e0b;color:#92400e}
+.note-caption{position:absolute;bottom:2px;left:2px;right:2px;font-size:8px;line-height:1.2;color:#92400e;background:rgba(254,243,199,.9);border-radius:3px;padding:1px 3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;z-index:4}
 
 .loading{text-align:center;padding:60px;color:var(--muted)}
 .loading-spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--line);border-top:3px solid var(--brand);border-radius:50%;animation:spin .6s linear infinite;margin-bottom:12px}
@@ -72,8 +79,8 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 <body>
 
 <div class="container">
-  <h1>📅 Dr Jon — My Regular Timetable</h1>
-  <div class="subtitle">Live view — read only — recurring weekly schedule</div>
+  <h1>📅 Dr Jon — My Timetable</h1>
+  <div class="subtitle">Live view — read only — next 2 weeks</div>
 
   <div class="stats" id="stats"></div>
 
@@ -88,39 +95,85 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 </div>
 
 <script>
-const regularDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const dayFull = {"Mon":"Monday","Tue":"Tuesday","Wed":"Wednesday","Thu":"Thursday","Fri":"Friday","Sat":"Saturday","Sun":"Sunday"};
 const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
 
-const dayFull = {"Mon":"Monday","Tue":"Tuesday","Wed":"Wednesday","Thu":"Thursday","Fri":"Friday","Sat":"Saturday","Sun":"Sunday"};
+function generateWeeks(startDate, numWeeks) {
+  const weeksArr = [];
+  const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  for(let w = 0; w < numWeeks; w++) {
+    const days = [];
+    for(let d = 0; d < 7; d++) {
+      const yyyy = cursor.getFullYear();
+      const mm = String(cursor.getMonth()+1).padStart(2,'0');
+      const dd = String(cursor.getDate()).padStart(2,'0');
+      const diso = yyyy + '-' + mm + '-' + dd;
+      const dl = cursor.getDate() + '/' + (cursor.getMonth()+1);
+      const ds = DAY_ABBR[cursor.getDay()];
+      days.push([dl, ds, diso]);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    weeksArr.push({id: 'w'+(w+1), range: days[0][0] + ' – ' + days[6][0], days});
+  }
+  return weeksArr;
+}
+
+// Rolling window: today through 2 weeks ahead, regenerated fresh on every load.
+const weeks = generateWeeks(new Date(), 2);
 
 const colors26 = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B739','#52BE80','#EC7063','#5DADE2','#F1948A','#76D7C4','#F9E79F','#D7BDE2','#AED6F1','#FADBD8','#A9DFBF','#F4D03F','#D5A6BD','#85C1E0','#F8B88B','#82E0AA','#F1948A','#AEC6CF'];
 
+function getColorForCode(code) {
+  if(!code) return colors26[0];
+  const firstLetter = code.toUpperCase().charCodeAt(0) - 65;
+  return colors26[((firstLetter % 26) + 26) % 26];
+}
+
+// Regular-timetable slots store a plain student name (not a code). Resolve back to
+// that student's code where possible so the color matches their real bookings.
 function getColorForName(name) {
   if(!name) return colors26[0];
+  const code = Object.keys(studentNames).find(c => studentNames[c] === name);
+  if(code) return getColorForCode(code);
   const firstLetter = name.toUpperCase().charCodeAt(0) - 65;
   return colors26[((firstLetter % 26) + 26) % 26];
 }
 
+let allBookings = {};
+let unavailableSlots = {};
+let studentNames = {};
 let regularTimetable = {};
-let loadedRegular = false;
+let weekOverrideFree = {};
+let slotNotes = {};
+let loadedBookings = false, loadedUnavail = false, loadedNames = false, loadedRegular = false, loadedOverride = false, loadedNotes = false;
+
+function sid(date, time) {
+  return "s" + date.replace(/-/g, "") + time.replace(":", "");
+}
+
+function maybeRender() {
+  if(loadedBookings && loadedUnavail && loadedNames && loadedRegular && loadedOverride && loadedNotes) renderAll();
+}
 
 function renderStats() {
-  const entries = Object.values(regularTimetable);
-  const totalSlots = entries.length;
-  const uniqueStudents = new Set(entries).size;
+  const approved = Object.values(allBookings).filter(b => b.status === 'approved').length;
+  const uniqueStudents = new Set(Object.values(allBookings).filter(b => b.status === 'approved').map(b => b.code)).size;
 
   document.getElementById('stats').innerHTML =
-    '<div class="stat-card"><div class="number">' + totalSlots + '</div><div class="label">Weekly Lesson Slots</div></div>' +
-    '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Regular Students</div></div>';
+    '<div class="stat-card"><div class="number">' + approved + '</div><div class="label">Total Lessons</div></div>' +
+    '<div class="stat-card"><div class="number">' + uniqueStudents + '</div><div class="label">Students</div></div>';
 }
 
 function renderAll() {
   renderStats();
 
   let thead = '<tr><th style="min-width:60px">Time</th>';
-  regularDays.forEach(d => {
-    const hasSep = (d === 'Sat') ? 'sun-sep' : '';
-    thead += '<th class="' + hasSep + '"><b>' + d + '</b><span>' + dayFull[d] + '</span></th>';
+  weeks.forEach(w => {
+    w.days.forEach(([dl,ds,diso]) => {
+      const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
+      thead += '<th class="' + hasSep + '"><b>' + dl + '</b><span>' + dayFull[ds] + '</span></th>';
+    });
   });
   thead += '<th class="time-header">Time</th></tr>';
   document.getElementById('tableHead').innerHTML = thead;
@@ -130,20 +183,45 @@ function renderAll() {
     tbody += '<tr>';
     tbody += '<td style="background:#f0f4ff;font-weight:800;color:var(--brand);text-align:center;min-width:60px;position:sticky;left:0;z-index:2">' + tl + '</td>';
 
-    regularDays.forEach(d => {
-      const key = d + '_' + ts;
-      const name = regularTimetable[key];
-      const hasSep = (d === 'Sat') ? 'sun-sep' : '';
+    weeks.forEach(w => {
+      w.days.forEach(([dl,ds,diso]) => {
+        const slotId = sid(diso,ts);
+        const bookings = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId);
+        const isUnavail = unavailableSlots[slotId];
+        const isReserved = isUnavail && isUnavail.reserved;
+        const approvedBooking = bookings.find(([k,b]) => b.status === 'approved');
+        const pendingBooking = bookings.find(([k,b]) => b.status === 'pending');
+        const isRegularlyClosed = !!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId];
 
-      let btn = '';
-      if(name) {
-        const color = getColorForName(name);
-        btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + name + '</button>';
-      } else {
-        btn = '<button class="slot-btn">Free</button>';
-      }
+        const hasSep = (ds === 'Sun') ? 'sun-sep' : '';
 
-      tbody += '<td class="' + hasSep + '">' + btn + '</td>';
+        let btn = '';
+        if(approvedBooking) {
+          const code = approvedBooking[1].code;
+          const color = getColorForCode(code);
+          const displayText = studentNames[code] || code;
+          btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff">' + displayText + '</button>';
+        } else if(pendingBooking) {
+          const code = pendingBooking[1].code;
+          btn = '<button class="slot-btn pending">' + code + '</button>';
+        } else if(isReserved) {
+          btn = '<button class="slot-btn reserved">Reserved</button>';
+        } else if(isUnavail) {
+          btn = '<button class="slot-btn unavailable">Unavail</button>';
+        } else if(isRegularlyClosed) {
+          const regularName = regularTimetable[ds+'_'+ts];
+          const regColor = getColorForName(regularName);
+          btn = '<button class="slot-btn regular-closed" style="background:' + regColor + ';color:#fff" title="Regularly ' + regularName + '">🔒 ' + regularName + '</button>';
+        } else {
+          btn = '<button class="slot-btn">Free</button>';
+        }
+
+        const note = slotNotes[slotId];
+        const badge = note ? '<span class="note-badge" title="' + ((note.emoji||'📌') + ' ' + (note.text||'')).replace(/"/g,'&quot;') + '">' + (note.emoji || '📌') + '</span>' : '';
+        const caption = (note && note.text) ? '<div class="note-caption" title="' + ((note.emoji||'📌') + ' ' + note.text).replace(/"/g,'&quot;') + '">' + note.text + '</div>' : '';
+
+        tbody += '<td class="' + hasSep + '" style="position:relative">' + btn + badge + caption + '</td>';
+      });
     });
 
     tbody += '<td class="time-cell">' + tl + '</td></tr>';
@@ -156,7 +234,12 @@ function init() {
   if(!window.firebaseDB) { setTimeout(init, 100); return; }
   const {ref, onValue, db} = window.firebaseDB;
 
-  onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; renderAll(); });
+  onValue(ref(db,'bookings'), snap => { allBookings = snap.val() || {}; loadedBookings = true; maybeRender(); });
+  onValue(ref(db,'unavailable'), snap => { unavailableSlots = snap.val() || {}; loadedUnavail = true; maybeRender(); });
+  onValue(ref(db,'studentNames'), snap => { studentNames = snap.val() || {}; loadedNames = true; maybeRender(); });
+  onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; maybeRender(); });
+  onValue(ref(db,'weekOverrideFree'), snap => { weekOverrideFree = snap.val() || {}; loadedOverride = true; maybeRender(); });
+  onValue(ref(db,'slotNotes'), snap => { slotNotes = snap.val() || {}; loadedNotes = true; maybeRender(); });
 }
 
 init();

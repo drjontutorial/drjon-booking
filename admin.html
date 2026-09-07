@@ -119,8 +119,8 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 .slot-btn.student{cursor:pointer;font-weight:600}
 .slot-btn.book-mode{background:#f59e0b;color:#fff;cursor:pointer;font-weight:700}
 .slot-btn.book-mode:hover{background:#d97706;transform:scale(1.05)}
-.slot-btn.regular-closed{background:#cbd5e1;color:#475569;cursor:pointer;font-weight:600;border:1.5px dashed #94a3b8}
-.slot-btn.regular-closed:hover{background:#b6c2d1}
+.slot-btn.regular-closed{cursor:pointer;font-weight:600;border:1.5px dashed rgba(255,255,255,.6)}
+.slot-btn.regular-closed:hover{filter:brightness(0.9)}
 .slot-btn.regular-free{background:#e5e7eb;color:#475569;cursor:pointer;font-weight:600}
 .slot-btn.regular-free:hover{background:#d1d5db}
 .slot-btn.regular-blocked{background:#475569;color:#fff;cursor:pointer;font-weight:600}
@@ -304,6 +304,17 @@ function getColorForCode(code) {
   if(!code || code.length===0) return '#ccc';
   const firstLetter = code.charCodeAt(0) - 65;
   return colors26[firstLetter % 26];
+}
+
+// Regular-timetable slots store a plain student name (not a code). Resolve back to
+// that student's code where possible so their color matches their real bookings
+// elsewhere in the grid; fall back to hashing the name itself.
+function getColorForName(name) {
+  if(!name) return '#ccc';
+  const code = Object.keys(studentNames).find(c => studentNames[c] === name);
+  if(code) return getColorForCode(code);
+  const firstLetter = name.toUpperCase().charCodeAt(0) - 65;
+  return colors26[((firstLetter % 26) + 26) % 26];
 }
 
 const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -874,7 +885,7 @@ function renderRegularTab() {
       const key = d + '_' + ts;
       const label = regularTimetable[key];
       const btn = label
-        ? '<button class="slot-btn regular-blocked" title="Click to clear" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">' + label + '</button>'
+        ? '<button class="slot-btn regular-blocked" style="background:' + getColorForName(label) + ';color:#fff" title="Click to clear" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">' + label + '</button>'
         : '<button class="slot-btn regular-free" onclick="toggleRegularSlot(' + "'" + d + "'" + ', ' + "'" + ts + "'" + ')">Free</button>';
       tbody += '<td>' + btn + '</td>';
     });
@@ -1175,7 +1186,8 @@ function renderAllRequestsTable() {
           btn = '<button class="slot-btn unavailable" onclick="toggleUnavail(' + "'" + slotId + "'" + ')">Unavail</button>';
         } else if(!!regularTimetable[ds+'_'+ts] && !weekOverrideFree[slotId]) {
           const regularName = regularTimetable[ds+'_'+ts];
-          btn = '<button class="slot-btn regular-closed" title="Regularly ' + regularName + ' — click to open just this date" onclick="openThisWeekOnly(' + "'" + slotId + "'" + ')">🔒 ' + regularName + '</button>';
+          const regColor = getColorForName(regularName);
+          btn = '<button class="slot-btn regular-closed" style="background:' + regColor + ';color:#fff" title="Regularly ' + regularName + ' — click to open just this date" onclick="openThisWeekOnly(' + "'" + slotId + "'" + ')">🔒 ' + regularName + '</button>';
         } else if(bookingModeActive) {
           btn = '<button class="slot-btn book-mode" title="Book for ' + bookingModeCode + '" onclick="adminBookSlot(' + "'" + slotId + "'" + ', ' + "'" + diso + "'" + ', ' + "'" + ts + "'" + ')">➕ Book</button>';
         } else {
