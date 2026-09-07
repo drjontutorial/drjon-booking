@@ -306,18 +306,31 @@ function getColorForCode(code) {
   return colors26[firstLetter % 26];
 }
 
-const weeks = [
-  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
-  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
-  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
-  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]},
-  {id:"w5",range:"27/7 – 2/8",days:[["27/7","Mon","2026-07-27"],["28/7","Tue","2026-07-28"],["29/7","Wed","2026-07-29"],["30/7","Thu","2026-07-30"],["31/7","Fri","2026-07-31"],["1/8","Sat","2026-08-01"],["2/8","Sun","2026-08-02"]]},
-  {id:"w6",range:"3/8 – 9/8",days:[["3/8","Mon","2026-08-03"],["4/8","Tue","2026-08-04"],["5/8","Wed","2026-08-05"],["6/8","Thu","2026-08-06"],["7/8","Fri","2026-08-07"],["8/8","Sat","2026-08-08"],["9/8","Sun","2026-08-09"]]},
-  {id:"w7",range:"10/8 – 16/8",days:[["10/8","Mon","2026-08-10"],["11/8","Tue","2026-08-11"],["12/8","Wed","2026-08-12"],["13/8","Thu","2026-08-13"],["14/8","Fri","2026-08-14"],["15/8","Sat","2026-08-15"],["16/8","Sun","2026-08-16"]]},
-  {id:"w8",range:"17/8 – 23/8",days:[["17/8","Mon","2026-08-17"],["18/8","Tue","2026-08-18"],["19/8","Wed","2026-08-19"],["20/8","Thu","2026-08-20"],["21/8","Fri","2026-08-21"],["22/8","Sat","2026-08-22"],["23/8","Sun","2026-08-23"]]},
-  {id:"w9",range:"24/8 – 30/8",days:[["24/8","Mon","2026-08-24"],["25/8","Tue","2026-08-25"],["26/8","Wed","2026-08-26"],["27/8","Thu","2026-08-27"],["28/8","Fri","2026-08-28"],["29/8","Sat","2026-08-29"],["30/8","Sun","2026-08-30"]]},
-  {id:"w10",range:"31/8 – 6/9",days:[["31/8","Mon","2026-08-31"],["1/9","Tue","2026-09-01"],["2/9","Wed","2026-09-02"],["3/9","Thu","2026-09-03"],["4/9","Fri","2026-09-04"],["5/9","Sat","2026-09-05"],["6/9","Sun","2026-09-06"]]}
-];
+const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function generateWeeks(startDate, numWeeks) {
+  const weeksArr = [];
+  const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  for(let w = 0; w < numWeeks; w++) {
+    const days = [];
+    for(let d = 0; d < 7; d++) {
+      const yyyy = cursor.getFullYear();
+      const mm = String(cursor.getMonth()+1).padStart(2,'0');
+      const dd = String(cursor.getDate()).padStart(2,'0');
+      const diso = yyyy + '-' + mm + '-' + dd;
+      const dl = cursor.getDate() + '/' + (cursor.getMonth()+1);
+      const ds = DAY_ABBR[cursor.getDay()];
+      days.push([dl, ds, diso]);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    weeksArr.push({id: 'w'+(w+1), range: days[0][0] + ' – ' + days[6][0], days});
+  }
+  return weeksArr;
+}
+
+// Rolling window: today through 4 weeks ahead, regenerated fresh on every load —
+// no more manually extending this list every couple of weeks.
+const weeks = generateWeeks(new Date(), 4);
 
 const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
 const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
