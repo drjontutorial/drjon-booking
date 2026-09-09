@@ -35,21 +35,29 @@ window.firebaseDB = { ref, onValue, push, update, db };
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);padding:20px}
-.container{max-width:1200px;margin:0 auto}
+.container{max-width:1440px;margin:0 auto}
+
+.page-layout{display:flex;gap:20px;align-items:flex-start}
+.todo-sidebar{width:260px;flex-shrink:0;position:sticky;top:20px}
+.main-content{flex:1;min-width:0}
+@media (max-width:900px){
+  .page-layout{flex-direction:column}
+  .todo-sidebar{width:100%;position:static}
+}
 h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--brand);margin-bottom:6px}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:20px}
 
-.todo-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
-.todo-card h2{font-family:'DM Serif Display',serif;font-size:18px;color:var(--brand);margin-bottom:12px;font-weight:400}
-.todo-input-row{display:flex;gap:8px;margin-bottom:14px}
-.todo-input-row input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif}
-.todo-input-row button{padding:10px 20px;background:var(--brand);color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.todo-list{list-style:none}
-.todo-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);margin-bottom:8px}
-.todo-item .todo-text{flex:1;font-size:14px;color:var(--ink);word-break:break-word}
-.todo-item .todo-archive-btn{background:var(--green);color:#fff;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.todo-card{background:#fffdf5;border:1px solid var(--line);border-radius:12px 12px 4px 4px;padding:18px 16px 16px 22px;box-shadow:0 6px 20px rgba(0,0,0,.08);position:relative;border-left:4px solid #f59e0b}
+.todo-card h2{font-family:'DM Serif Display',serif;font-size:17px;color:var(--brand);margin-bottom:14px;font-weight:400}
+.todo-input-row{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.todo-input-row input{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff}
+.todo-input-row button{padding:10px;background:var(--brand);color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif}
+.todo-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.todo-item{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px dashed #e2c98a;background:transparent}
+.todo-item .todo-text{font-size:13px;color:var(--ink);word-break:break-word;line-height:1.4}
+.todo-item .todo-archive-btn{align-self:flex-end;background:var(--green);color:#fff;border:0;padding:5px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:10px;white-space:nowrap;font-family:'DM Sans',sans-serif}
 .todo-item .todo-archive-btn:hover{background:var(--green-dark)}
-.todo-empty{color:var(--muted);font-size:13px;padding:8px 0}
+.todo-empty{color:var(--muted);font-size:12px;padding:8px 0}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
 .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
@@ -94,24 +102,30 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
   <h1>📅 Dr Jon — My Timetable</h1>
   <div class="subtitle">Live view — read only — next 2 weeks</div>
 
-  <div class="todo-card">
-    <h2>✅ To-Do</h2>
-    <div class="todo-input-row">
-      <input type="text" id="todoInput" placeholder="What do you need to do?" onkeypress="if(event.key==='Enter') addTodo()">
-      <button onclick="addTodo()">Add</button>
+  <div class="page-layout">
+    <div class="todo-sidebar">
+      <div class="todo-card">
+        <h2>✅ To-Do</h2>
+        <div class="todo-input-row">
+          <input type="text" id="todoInput" placeholder="What do you need to do?" onkeypress="if(event.key==='Enter') addTodo()">
+          <button onclick="addTodo()">Add</button>
+        </div>
+        <ul class="todo-list" id="todoList"></ul>
+      </div>
     </div>
-    <ul class="todo-list" id="todoList"></ul>
-  </div>
 
-  <div class="stats" id="stats"></div>
+    <div class="main-content">
+      <div class="stats" id="stats"></div>
 
-  <div class="booking-table">
-    <table id="requestTable">
-      <thead id="tableHead"></thead>
-      <tbody id="tableBody">
-        <tr><td colspan="99"><div class="loading"><div class="loading-spinner"></div><p>Loading timetable...</p></div></td></tr>
-      </tbody>
-    </table>
+      <div class="booking-table">
+        <table id="requestTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody">
+            <tr><td colspan="99"><div class="loading"><div class="loading-spinner"></div><p>Loading timetable...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
