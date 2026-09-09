@@ -894,6 +894,25 @@ function renderRegularTab() {
   body.innerHTML = tbody;
 }
 
+function getDowFromISO(diso) {
+  const [y,m,d] = diso.split('-').map(Number);
+  return DAY_ABBR[new Date(y, m-1, d).getDay()];
+}
+
+// Any upcoming approved booking that falls on this weekday+time, regardless of
+// student — these were booked as one-off/ad-hoc arrangements and won't be
+// touched by a regular-timetable change, but Dr Jon needs to know they exist
+// before he commits to a new recurring pattern that would clash with them.
+function findConflictingBookings(dow, ts) {
+  const todayISO = getTodayISO();
+  return Object.entries(allBookings).filter(([k,b]) => {
+    if(b.status !== 'approved') return false;
+    if(b.time !== ts) return false;
+    if(!b.date || b.date < todayISO) return false;
+    return getDowFromISO(b.date) === dow;
+  }).sort((a,b) => a[1].date.localeCompare(b[1].date));
+}
+
 function toggleRegularSlot(dow, ts) {
   if(!window.firebaseDB) return;
   const {ref,set,db:fbdb} = window.firebaseDB;
@@ -901,6 +920,18 @@ function toggleRegularSlot(dow, ts) {
   if(regularTimetable[key]) {
     set(ref(fbdb,'regularTimetable/'+key), null);
   } else {
+    const conflicts = findConflictingBookings(dow, ts);
+    if(conflicts.length > 0) {
+      const lines = conflicts.map(([k,b]) => {
+        const name = studentNames[b.code] || b.code;
+        return '• ' + b.date + ' — ' + name;
+      }).join('\n');
+      const proceed = confirm(
+        '⚠️ Heads up: ' + conflicts.length + ' upcoming lesson(s) are already booked at ' + dayFull[dow] + ' ' + ts + ':\n\n' + lines +
+        '\n\nThis won\'t cancel them — real bookings always win over the regular pattern — but you may have a scheduling clash to sort out.\n\nContinue setting this as a regular slot?'
+      );
+      if(!proceed) return;
+    }
     const name = prompt('Which student regularly has this slot? (leave blank to just mark it unavailable)');
     if(name === null) return; // cancelled
     set(ref(fbdb,'regularTimetable/'+key), name.trim() || 'Unavailable');
