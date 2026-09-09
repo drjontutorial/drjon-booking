@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap" rel="stylesheet">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAS34ly4yLmiw8hBWN62wg5fi8IhzPwZqI",
@@ -22,7 +22,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-window.firebaseDB = { ref, onValue, db };
+window.firebaseDB = { ref, onValue, push, update, db };
 </script>
 
 <style>
@@ -38,6 +38,18 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);padd
 .container{max-width:1200px;margin:0 auto}
 h1{font-family:'DM Serif Display',serif;font-size:28px;color:var(--brand);margin-bottom:6px}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+.todo-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.todo-card h2{font-family:'DM Serif Display',serif;font-size:18px;color:var(--brand);margin-bottom:12px;font-weight:400}
+.todo-input-row{display:flex;gap:8px;margin-bottom:14px}
+.todo-input-row input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif}
+.todo-input-row button{padding:10px 20px;background:var(--brand);color:#fff;border:0;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.todo-list{list-style:none}
+.todo-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);margin-bottom:8px}
+.todo-item .todo-text{flex:1;font-size:14px;color:var(--ink);word-break:break-word}
+.todo-item .todo-archive-btn{background:var(--green);color:#fff;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.todo-item .todo-archive-btn:hover{background:var(--green-dark)}
+.todo-empty{color:var(--muted);font-size:13px;padding:8px 0}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
 .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
@@ -81,6 +93,15 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 <div class="container">
   <h1>📅 Dr Jon — My Timetable</h1>
   <div class="subtitle">Live view — read only — next 2 weeks</div>
+
+  <div class="todo-card">
+    <h2>✅ To-Do</h2>
+    <div class="todo-input-row">
+      <input type="text" id="todoInput" placeholder="What do you need to do?" onkeypress="if(event.key==='Enter') addTodo()">
+      <button onclick="addTodo()">Add</button>
+    </div>
+    <ul class="todo-list" id="todoList"></ul>
+  </div>
 
   <div class="stats" id="stats"></div>
 
@@ -146,6 +167,48 @@ let studentNames = {};
 let regularTimetable = {};
 let weekOverrideFree = {};
 let slotNotes = {};
+let todos = {};
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderTodos() {
+  const list = document.getElementById('todoList');
+  const active = Object.entries(todos)
+    .filter(([k,t]) => !t.archived)
+    .sort((a,b) => (a[1].ts||0) - (b[1].ts||0)); // oldest first
+
+  if(active.length === 0) {
+    list.innerHTML = '<div class="todo-empty">Nothing on the list right now.</div>';
+    return;
+  }
+
+  list.innerHTML = active.map(([id,t]) =>
+    '<li class="todo-item"><span class="todo-text">' + escapeHtml(t.text) + '</span>' +
+    '<button class="todo-archive-btn" onclick="archiveTodo(' + "'" + id + "'" + ')">✓ Done</button></li>'
+  ).join('');
+}
+
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if(!text) return;
+  if(!window.firebaseDB) return;
+  const {ref, push, db:fbdb} = window.firebaseDB;
+  push(ref(fbdb,'todos'), {text: text, ts: Date.now(), archived: false})
+    .then(() => { input.value = ''; })
+    .catch(err => { console.error(err); alert('Could not save that task: ' + (err.message || err)); });
+}
+
+function archiveTodo(id) {
+  if(!window.firebaseDB) return;
+  const {ref, update, db:fbdb} = window.firebaseDB;
+  update(ref(fbdb,'todos/'+id), {archived: true, archivedAt: Date.now()})
+    .catch(err => { console.error(err); alert('Could not archive that task: ' + (err.message || err)); });
+}
 let loadedBookings = false, loadedUnavail = false, loadedNames = false, loadedRegular = false, loadedOverride = false, loadedNotes = false;
 
 function sid(date, time) {
@@ -240,6 +303,7 @@ function init() {
   onValue(ref(db,'regularTimetable'), snap => { regularTimetable = snap.val() || {}; loadedRegular = true; maybeRender(); });
   onValue(ref(db,'weekOverrideFree'), snap => { weekOverrideFree = snap.val() || {}; loadedOverride = true; maybeRender(); });
   onValue(ref(db,'slotNotes'), snap => { slotNotes = snap.val() || {}; loadedNotes = true; maybeRender(); });
+  onValue(ref(db,'todos'), snap => { todos = snap.val() || {}; renderTodos(); });
 }
 
 init();
