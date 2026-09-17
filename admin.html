@@ -167,19 +167,19 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('new')">New Requests</button>
-      <button class="tab-btn" onclick="switchTab('all')">All Requests</button>
+      <button class="tab-btn" onclick="switchTab('new')">New Requests</button>
+      <button class="tab-btn active" onclick="switchTab('all')">All Requests</button>
       <button class="tab-btn" onclick="switchTab('regular')">🗓️ Regular Timetable</button>
     </div>
 
-    <div id="newTab">
+    <div id="newTab" style="display:none">
       <div class="stats" id="stats"></div>
       <button class="toggle-history" onclick="toggleHistory()">📋 Show Old Requests</button>
       <div id="newList"></div>
       <div id="historyList" style="display:none;margin-top:20px"></div>
     </div>
 
-    <div id="allTab" style="display:none">
+    <div id="allTab">
       <div class="book-for-panel" id="bookForPanel">
         <h3>🧑‍🏫 Book a Lesson for a Student</h3>
         <div class="lookup-controls">
@@ -290,7 +290,7 @@ let lastLoginTime = Date.now();
 let pendingAction = null;
 let showingHistory = false;
 let currentLookupCode = '';
-let needsScrollToToday = false;
+let needsScrollToToday = true; // All Requests is the default tab now, so scroll to today on first load
 let bookingModeActive = false;
 let bookingModeCode = '';
 let regularTimetable = {};
@@ -378,6 +378,8 @@ function loadData() {
   onValue(ref(db,'studentNames'), snap => {
     studentNames = snap.val() || {};
     renderNewRequests();
+    updateStudentCodeDropdown();
+    renderAllRequestsTable();
   });
 
   onValue(ref(db,'regularTimetable'), snap => {
