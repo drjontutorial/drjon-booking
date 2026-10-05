@@ -350,9 +350,15 @@ function sid(diso, tstr) {
   return "s" + diso.replace(/-/g,"") + tstr.replace(/:/g,"");
 }
 
+// UK offset on a given date (+01:00 in BST, +00:00 in GMT) — clocks change on the last Sunday of March/October.
+function ukOffset(dateISO) {
+  const h = +new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',hour12:false}).format(new Date(dateISO+'T12:00:00Z'));
+  return h === 13 ? '+01:00' : '+00:00';
+}
+
 function getLocalTime(dateISO, timeStr, tz) {
   try {
-    const dt = new Date(dateISO+'T'+timeStr+':00+01:00');
+    const dt = new Date(dateISO+'T'+timeStr+':00'+ukOffset(dateISO));
     return new Intl.DateTimeFormat('en-GB',{timeZone:tz,weekday:'long',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(dt);
   } catch(e) {return dateISO+' '+timeStr;}
 }

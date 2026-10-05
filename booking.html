@@ -61,6 +61,8 @@ header{
 .wtab.past b,.wtab.past span{color:#9ca3af}
 .wtab b{display:block;font-size:13px;font-weight:800}
 .wtab>span:not(.wk-count){display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.dst-star{position:absolute;top:-8px;left:-6px;font-size:16px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.dst-notice{background:#fef9c3;border:1.5px solid #facc15;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#713f12;line-height:1.5}
 .wk-count{display:none;position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;border-radius:50px;font-size:10px;font-weight:900;padding:2px 6px;border:2px solid var(--bg)}
 .wk-count.show{display:block}
 
@@ -138,6 +140,7 @@ ol{padding-left:18px;line-height:1.8;font-size:14px}
     <p>The lesson times shown below have been automatically converted to your selected time zone. Please check carefully before confirming your booking.</p>
   </div>
   
+  <div class="dst-notice">⭐ <strong>Time change for students in Asia:</strong> UK clocks go back 1 hour on <strong>Sunday 25 October</strong>. In the weeks marked ⭐, every lesson is <strong>1 hour later</strong> in your local time — e.g. UK 10am is 5pm in Hong Kong/China before 25 Oct, but <strong>6pm</strong> from 25 Oct. Choose your time zone below to see the exact times.</div>
   <div class="weeks" id="weekTabs"></div>
   <div class="controls-row">
     <button class="clear-btn" onclick="clearAll()">✕ Clear all</button>
@@ -220,12 +223,19 @@ function renderWeekTabs() {
     radios += '<input type="radio" name="week" id="tab-'+w.id+'" class="wr"'+(i===0?' checked':'')+'>';
     css += '#tab-'+w.id+':checked~.app .panel-'+w.id+'{display:block}';
     activeSel.push('#tab-'+w.id+':checked~.app .tab-'+w.id);
-    labels += '<label for="tab-'+w.id+'" class="wtab tab-'+w.id+'"><b>Week '+(i+1)+'</b><span>'+w.range+'</span><span class="wk-count" id="cnt-'+w.id+'"></span></label>';
+    const star = ukOffset(w.days[0][2]) !== ukOffset(weeks[0].days[0][2]) ? '<span class="dst-star" title="UK clocks change on 25 Oct — lessons are 1 hour later in Asian time">⭐</span>' : '';
+    labels += '<label for="tab-'+w.id+'" class="wtab tab-'+w.id+'">'+star+'<b>Week '+(i+1)+'</b><span>'+w.range+'</span><span class="wk-count" id="cnt-'+w.id+'"></span></label>';
   });
   css += activeSel.join(',')+'{background:var(--brand);color:#fff;border-color:var(--brand)}';
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   document.querySelector('.app').insertAdjacentHTML('beforebegin', radios);
   document.getElementById('weekTabs').innerHTML = labels;
+}
+
+// UK offset on a given date (+01:00 in BST, +00:00 in GMT) — clocks change on the last Sunday of March/October.
+function ukOffset(dateISO) {
+  const h = +new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',hour12:false}).format(new Date(dateISO+'T12:00:00Z'));
+  return h === 13 ? '+01:00' : '+00:00';
 }
 
 const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
@@ -339,7 +349,7 @@ function generateHTML() {
         const id = sid(diso,ts);
         row += '<td><label for="' + id + '" class="slot"><span class="f">Free</span><span class="s">✓</span></label></td>';
       });
-      row += '<td class="time-right-cell local-time-cell" data-uktime="' + ts + '">' + tl + '</td></tr>';
+      row += '<td class="time-right-cell local-time-cell" data-date="' + w.days[0][2] + '" data-uktime="' + ts + '">' + tl + '</td></tr>';
       rows += row;
     });
     
@@ -442,11 +452,11 @@ function onTzChange() {
   document.querySelectorAll('.local-time-cell').forEach(cell => {
     const ukTime = cell.dataset.uktime;
     if(isUK) {
-      const timeMap = {'10:00':'10am','11:00':'11am','12:00':'12nn','14:00':'2pm','15:00':'3pm','16:00':'4pm','17:00':'5pm','18:00':'6pm','19:00':'7pm','20:30':'8:30pm','21:30':'9:30pm'};
+      const timeMap = {'09:00':'9am','10:00':'10am','11:00':'11am','12:00':'12nn','14:00':'2pm','15:00':'3pm','16:00':'4pm','17:00':'5pm','18:00':'6pm','19:00':'7pm','20:30':'8:30pm','21:30':'9:30pm'};
       cell.textContent = timeMap[ukTime]||ukTime;
     } else {
       try {
-        const dt = new Date('2026-07-01T' + ukTime + ':00+01:00');
+        const dt = new Date(cell.dataset.date + 'T' + ukTime + ':00' + ukOffset(cell.dataset.date));
         cell.textContent = new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false}).format(dt);
       } catch(e) { cell.textContent=ukTime; }
     }
@@ -461,7 +471,7 @@ function onTzChange() {
 
 function localTimeStr(dateISO,timeStr,tz) {
   try {
-    const dt = new Date(dateISO+'T'+timeStr+':00+01:00');
+    const dt = new Date(dateISO+'T'+timeStr+':00'+ukOffset(dateISO));
     return new Intl.DateTimeFormat('en-GB',{timeZone:tz,weekday:'long',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(dt);
   } catch(e) {return dateISO+' '+timeStr;}
 }
