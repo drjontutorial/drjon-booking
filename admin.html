@@ -1443,6 +1443,9 @@ function exportBackup() {
     bookings: allBookings,
     unavailable: unavailableSlots,
     studentNames: studentNames,
+    regularTimetable: regularTimetable,
+    weekOverrideFree: weekOverrideFree,
+    slotNotes: slotNotes,
     heldSlots: {},
     exportDate: new Date().toISOString()
   };
@@ -1482,6 +1485,9 @@ function importBackup() {
       if(backup.studentNames) {
         set(ref(fbdb,'studentNames'), backup.studentNames);
       }
+      if(backup.regularTimetable) set(ref(fbdb,'regularTimetable'), backup.regularTimetable);
+      if(backup.weekOverrideFree) set(ref(fbdb,'weekOverrideFree'), backup.weekOverrideFree);
+      if(backup.slotNotes) set(ref(fbdb,'slotNotes'), backup.slotNotes);
       
       alert('✅ Backup restored successfully!');
       document.getElementById('importFile').value = '';

@@ -64,17 +64,6 @@ header{
 .wk-count{display:none;position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;border-radius:50px;font-size:10px;font-weight:900;padding:2px 6px;border:2px solid var(--bg)}
 .wk-count.show{display:block}
 
-#tab-w1:checked~.app .panel-w1{display:block}
-#tab-w2:checked~.app .panel-w2{display:block}
-#tab-w3:checked~.app .panel-w3{display:block}
-#tab-w4:checked~.app .panel-w4{display:block}
-#tab-w5:checked~.app .panel-w5{display:block}
-#tab-w6:checked~.app .panel-w6{display:block}
-#tab-w7:checked~.app .panel-w7{display:block}
-#tab-w8:checked~.app .panel-w8{display:block}
-#tab-w9:checked~.app .panel-w9{display:block}
-#tab-w10:checked~.app .panel-w10{display:block}
-#tab-w1:checked~.app .tab-w1,#tab-w2:checked~.app .tab-w2,#tab-w3:checked~.app .tab-w3,#tab-w4:checked~.app .tab-w4,#tab-w5:checked~.app .tab-w5,#tab-w6:checked~.app .tab-w6,#tab-w7:checked~.app .tab-w7,#tab-w8:checked~.app .tab-w8,#tab-w9:checked~.app .tab-w9,#tab-w10:checked~.app .tab-w10{background:var(--brand);color:#fff;border-color:var(--brand)}
 
 .panel{display:none}
 
@@ -132,16 +121,6 @@ ol{padding-left:18px;line-height:1.8;font-size:14px}
 }
 </style>
 
-<input type="radio" name="week" id="tab-w1" class="wr" checked>
-<input type="radio" name="week" id="tab-w2" class="wr">
-<input type="radio" name="week" id="tab-w3" class="wr">
-<input type="radio" name="week" id="tab-w4" class="wr">
-<input type="radio" name="week" id="tab-w5" class="wr">
-<input type="radio" name="week" id="tab-w6" class="wr">
-<input type="radio" name="week" id="tab-w7" class="wr">
-<input type="radio" name="week" id="tab-w8" class="wr">
-<input type="radio" name="week" id="tab-w9" class="wr">
-<input type="radio" name="week" id="tab-w10" class="wr">
 <div id="checkboxContainer"></div>
 
 <div class="app">
@@ -159,18 +138,7 @@ ol{padding-left:18px;line-height:1.8;font-size:14px}
     <p>The lesson times shown below have been automatically converted to your selected time zone. Please check carefully before confirming your booking.</p>
   </div>
   
-  <div class="weeks">
-    <label for="tab-w1" class="wtab tab-w1"><b>Week 1</b><span>29/6 – 5/7</span><span class="wk-count" id="cnt-w1"></span></label>
-    <label for="tab-w2" class="wtab tab-w2"><b>Week 2</b><span>6/7 – 12/7</span><span class="wk-count" id="cnt-w2"></span></label>
-    <label for="tab-w3" class="wtab tab-w3"><b>Week 3</b><span>13/7 – 19/7</span><span class="wk-count" id="cnt-w3"></span></label>
-    <label for="tab-w4" class="wtab tab-w4"><b>Week 4</b><span>20/7 – 26/7</span><span class="wk-count" id="cnt-w4"></span></label>
-    <label for="tab-w5" class="wtab tab-w5"><b>Week 5</b><span>27/7 – 2/8</span><span class="wk-count" id="cnt-w5"></span></label>
-    <label for="tab-w6" class="wtab tab-w6"><b>Week 6</b><span>3/8 – 9/8</span><span class="wk-count" id="cnt-w6"></span></label>
-    <label for="tab-w7" class="wtab tab-w7"><b>Week 7</b><span>10/8 – 16/8</span><span class="wk-count" id="cnt-w7"></span></label>
-    <label for="tab-w8" class="wtab tab-w8"><b>Week 8</b><span>17/8 – 23/8</span><span class="wk-count" id="cnt-w8"></span></label>
-    <label for="tab-w9" class="wtab tab-w9"><b>Week 9</b><span>24/8 – 30/8</span><span class="wk-count" id="cnt-w9"></span></label>
-    <label for="tab-w10" class="wtab tab-w10"><b>Week 10</b><span>31/8 – 6/9</span><span class="wk-count" id="cnt-w10"></span></label>
-  </div>
+  <div class="weeks" id="weekTabs"></div>
   <div class="controls-row">
     <button class="clear-btn" onclick="clearAll()">✕ Clear all</button>
     <select class="tzselect" id="tzSelect" onchange="onTzChange()">
@@ -221,18 +189,44 @@ ol{padding-left:18px;line-height:1.8;font-size:14px}
 </div>
 
 <script>
-const weeks = [
-  {id:"w1",range:"29/6 – 5/7",days:[["29/6","Mon","2026-06-29"],["30/6","Tue","2026-06-30"],["1/7","Wed","2026-07-01"],["2/7","Thu","2026-07-02"],["3/7","Fri","2026-07-03"],["4/7","Sat","2026-07-04"],["5/7","Sun","2026-07-05"]]},
-  {id:"w2",range:"6/7 – 12/7",days:[["6/7","Mon","2026-07-06"],["7/7","Tue","2026-07-07"],["8/7","Wed","2026-07-08"],["9/7","Thu","2026-07-09"],["10/7","Fri","2026-07-10"],["11/7","Sat","2026-07-11"],["12/7","Sun","2026-07-12"]]},
-  {id:"w3",range:"13/7 – 19/7",days:[["13/7","Mon","2026-07-13"],["14/7","Tue","2026-07-14"],["15/7","Wed","2026-07-15"],["16/7","Thu","2026-07-16"],["17/7","Fri","2026-07-17"],["18/7","Sat","2026-07-18"],["19/7","Sun","2026-07-19"]]},
-  {id:"w4",range:"20/7 – 26/7",days:[["20/7","Mon","2026-07-20"],["21/7","Tue","2026-07-21"],["22/7","Wed","2026-07-22"],["23/7","Thu","2026-07-23"],["24/7","Fri","2026-07-24"],["25/7","Sat","2026-07-25"],["26/7","Sun","2026-07-26"]]},
-  {id:"w5",range:"27/7 – 2/8",days:[["27/7","Mon","2026-07-27"],["28/7","Tue","2026-07-28"],["29/7","Wed","2026-07-29"],["30/7","Thu","2026-07-30"],["31/7","Fri","2026-07-31"],["1/8","Sat","2026-08-01"],["2/8","Sun","2026-08-02"]]},
-  {id:"w6",range:"3/8 – 9/8",days:[["3/8","Mon","2026-08-03"],["4/8","Tue","2026-08-04"],["5/8","Wed","2026-08-05"],["6/8","Thu","2026-08-06"],["7/8","Fri","2026-08-07"],["8/8","Sat","2026-08-08"],["9/8","Sun","2026-08-09"]]},
-  {id:"w7",range:"10/8 – 16/8",days:[["10/8","Mon","2026-08-10"],["11/8","Tue","2026-08-11"],["12/8","Wed","2026-08-12"],["13/8","Thu","2026-08-13"],["14/8","Fri","2026-08-14"],["15/8","Sat","2026-08-15"],["16/8","Sun","2026-08-16"]]},
-  {id:"w8",range:"17/8 – 23/8",days:[["17/8","Mon","2026-08-17"],["18/8","Tue","2026-08-18"],["19/8","Wed","2026-08-19"],["20/8","Thu","2026-08-20"],["21/8","Fri","2026-08-21"],["22/8","Sat","2026-08-22"],["23/8","Sun","2026-08-23"]]},
-  {id:"w9",range:"24/8 – 30/8",days:[["24/8","Mon","2026-08-24"],["25/8","Tue","2026-08-25"],["26/8","Wed","2026-08-26"],["27/8","Thu","2026-08-27"],["28/8","Fri","2026-08-28"],["29/8","Sat","2026-08-29"],["30/8","Sun","2026-08-30"]]},
-  {id:"w10",range:"31/8 – 6/9",days:[["31/8","Mon","2026-08-31"],["1/9","Tue","2026-09-01"],["2/9","Wed","2026-09-02"],["3/9","Thu","2026-09-03"],["4/9","Fri","2026-09-04"],["5/9","Sat","2026-09-05"],["6/9","Sun","2026-09-06"]]}
-];
+// Bookable window — change these two dates to open a new booking period.
+const BOOK_START = '2026-10-06';
+const BOOK_END   = '2026-11-07';
+
+function buildWeeks(startISO, endISO) {
+  const abbr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const [y,m,d] = startISO.split('-').map(Number);
+  const cursor = new Date(y, m-1, d);
+  cursor.setDate(cursor.getDate() - ((cursor.getDay()+6)%7)); // back to Monday
+  const out = [];
+  while(true) {
+    const days = [];
+    for(let i=0;i<7;i++) {
+      const iso = cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
+      days.push([cursor.getDate()+'/'+(cursor.getMonth()+1), abbr[cursor.getDay()], iso]);
+      cursor.setDate(cursor.getDate()+1);
+    }
+    out.push({id:'w'+(out.length+1), range: days[0][0]+' – '+days[6][0], days});
+    if(days[6][2] >= endISO) break;
+  }
+  return out;
+}
+
+const weeks = buildWeeks(BOOK_START, BOOK_END);
+
+function renderWeekTabs() {
+  let radios = '', css = '', labels = '', activeSel = [];
+  weeks.forEach((w,i) => {
+    radios += '<input type="radio" name="week" id="tab-'+w.id+'" class="wr"'+(i===0?' checked':'')+'>';
+    css += '#tab-'+w.id+':checked~.app .panel-'+w.id+'{display:block}';
+    activeSel.push('#tab-'+w.id+':checked~.app .tab-'+w.id);
+    labels += '<label for="tab-'+w.id+'" class="wtab tab-'+w.id+'"><b>Week '+(i+1)+'</b><span>'+w.range+'</span><span class="wk-count" id="cnt-'+w.id+'"></span></label>';
+  });
+  css += activeSel.join(',')+'{background:var(--brand);color:#fff;border-color:var(--brand)}';
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  document.querySelector('.app').insertAdjacentHTML('beforebegin', radios);
+  document.getElementById('weekTabs').innerHTML = labels;
+}
 
 const dayFull = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
 const times = [["09:00","9am"],["10:00","10am"],["11:00","11am"],["12:00","12nn"],["14:00","2pm"],["15:00","3pm"],["16:00","4pm"],["17:00","5pm"],["18:00","6pm"],["19:00","7pm"],["20:30","8:30pm"],["21:30","9:30pm"]];
@@ -509,7 +503,9 @@ function updateSlotStatus() {
     const hasPending = Object.values(allBookings).some(b => b.slotId === c.id && b.status === 'pending');
     const isRegularlyClosed = !!regularTimetable[c.dataset.dow+'_'+c.dataset.time] && !weekOverrideFree[c.id];
 
-    if(unavailableSlots[c.id]) {
+    const outOfRange = c.dataset.date < BOOK_START || c.dataset.date > BOOK_END;
+
+    if(unavailableSlots[c.id] || outOfRange) {
       lbl.classList.add('unavailable');
       lbl.innerHTML = 'Unavailable';
       c.disabled = true;
@@ -590,6 +586,7 @@ function showMsg(text,cls='') {
 }
 
 generateCodes();
+renderWeekTabs();
 generateHTML();
 hidePastWeeks();
 updateCounters();
