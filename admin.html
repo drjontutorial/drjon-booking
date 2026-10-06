@@ -117,6 +117,7 @@ th.sun-sep, td.sun-sep{border-right:3px solid #000!important}
 .slot-btn.unavailable{background:#000;color:#fff;cursor:not-allowed}
 .slot-btn.reserved{background:#8b5cf6;color:#fff;cursor:pointer;font-weight:600}
 .slot-btn.student{cursor:pointer;font-weight:600}
+.slot-btn.pending{background:#fef08a;color:#92400e;font-weight:700;border:1.5px dashed #f59e0b}
 .slot-btn.book-mode{background:#f59e0b;color:#fff;cursor:pointer;font-weight:700}
 .slot-btn.book-mode:hover{background:#d97706;transform:scale(1.05)}
 .slot-btn.regular-closed{cursor:pointer;font-weight:600;border:1.5px dashed rgba(255,255,255,.6)}
@@ -902,6 +903,13 @@ function renderRegularTab() {
   body.innerHTML = tbody;
 }
 
+// 'Saturday 24/10' for any date, not just ones inside the visible weeks.
+function formatDayLabel(diso) {
+  if(!diso) return 'Unknown date';
+  const [y,m,d] = diso.split('-').map(Number);
+  return dayFull[getDowFromISO(diso)] + ' ' + d + '/' + m;
+}
+
 function getDowFromISO(diso) {
   const [y,m,d] = diso.split('-').map(Number);
   return DAY_ABBR[new Date(y, m-1, d).getDay()];
@@ -989,7 +997,7 @@ function toggleHistory() {
 }
 
 function renderNewRequests() {
-  const newReqs = Object.entries(allBookings).filter(([k,b]) => b.ts > lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const newReqs = Object.entries(allBookings).filter(([k,b]) => b.status === 'pending' || b.ts > lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
   
   if(newReqs.length === 0) {
     document.getElementById('newList').innerHTML = '<div class="empty">No new requests</div>';
@@ -1015,14 +1023,7 @@ function renderNewRequests() {
     let tzName = '';
     
     group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
-      let dayInfo = 'Unknown';
-      weeks.forEach(w => {
-        w.days.forEach(([dl,ds,diso]) => {
-          if(diso === booking.date) {
-            dayInfo = dayFull[ds] + ' ' + dl;
-          }
-        });
-      });
+      let dayInfo = formatDayLabel(booking.date);
       
       ukList += '<li>' + dayInfo + ' — ' + booking.time + ' UK time</li>';
       
@@ -1036,14 +1037,7 @@ function renderNewRequests() {
     
     let bookingsHtml = '';
     group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
-      let dayInfo = 'Unknown';
-      weeks.forEach(w => {
-        w.days.forEach(([dl,ds,diso]) => {
-          if(diso === booking.date) {
-            dayInfo = dayFull[ds] + ' ' + dl;
-          }
-        });
-      });
+      let dayInfo = formatDayLabel(booking.date);
       
       let historyHtml = '';
       if(booking.approvedAt) {
@@ -1072,7 +1066,7 @@ function renderNewRequests() {
 }
 
 function renderHistory() {
-  const oldReqs = Object.entries(allBookings).filter(([k,b]) => b.ts <= lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const oldReqs = Object.entries(allBookings).filter(([k,b]) => b.status !== 'pending' && b.ts <= lastLoginTime).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
   
   if(oldReqs.length === 0) {
     document.getElementById('historyList').innerHTML = '<div class="empty">No old requests</div>';
@@ -1098,14 +1092,7 @@ function renderHistory() {
     let tzName = '';
     
     group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
-      let dayInfo = 'Unknown';
-      weeks.forEach(w => {
-        w.days.forEach(([dl,ds,diso]) => {
-          if(diso === booking.date) {
-            dayInfo = dayFull[ds] + ' ' + dl;
-          }
-        });
-      });
+      let dayInfo = formatDayLabel(booking.date);
       
       ukList += '<li>' + dayInfo + ' — ' + booking.time + ' UK time</li>';
       
@@ -1119,14 +1106,7 @@ function renderHistory() {
     
     let bookingsHtml = '';
     group.bookings.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach((booking) => {
-      let dayInfo = 'Unknown';
-      weeks.forEach(w => {
-        w.days.forEach(([dl,ds,diso]) => {
-          if(diso === booking.date) {
-            dayInfo = dayFull[ds] + ' ' + dl;
-          }
-        });
-      });
+      let dayInfo = formatDayLabel(booking.date);
       
       let historyHtml = '';
       if(booking.approvedAt) {
@@ -1218,7 +1198,7 @@ function renderAllRequestsTable() {
           btn = '<button class="slot-btn student" style="background:' + color + ';color:#fff;cursor:pointer" title="' + code + ' - ' + displayText + '\n\nClick to cancel" onclick="cancelStudentBooking(' + "'" + slotId + "'" + ', ' + "'" + code + "'" + ', ' + "'" + displayText + "'" + ')">' + displayText + '</button>';
         } else if(pendingBooking) {
           const code = pendingBooking[1].code;
-          btn = '<button class="slot-btn pending">' + code + '</button>';
+          btn = '<button class="slot-btn pending" title="' + code + ' — waiting for your approval (New Requests tab)">⏳ ' + (studentNames[code] || code) + '</button>';
         } else if(isReserved) {
           btn = '<button class="slot-btn reserved" onclick="toggleReserved(' + "'" + slotId + "'" + ')">Reserved</button>';
         } else if(isUnavail) {
