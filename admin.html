@@ -1277,39 +1277,33 @@ function updateStats() {
 }
 
 function showConflictDetails() {
-  const conflictMap = {};
-  
-  // Find all conflicting slots
-  times.forEach(([ts,tl]) => {
-    weeks.forEach(w => {
-      w.days.forEach(([dl,ds,diso]) => {
-        const slotId = sid(diso,ts);
-        const approvedForSlot = Object.entries(allBookings).filter(([k,b]) => b.slotId === slotId && b.status === 'approved');
-        
-        if(approvedForSlot.length > 1) {
-          const dayInfo = dayFull[ds] + ' ' + dl + ' — ' + ts;
-          conflictMap[dayInfo] = approvedForSlot.map(([k,b]) => ({
-            code: b.code,
-            name: studentNames[b.code] || b.code,
-            approvedAt: new Date(b.approvedAt).toLocaleString('en-GB')
-          }));
-        }
-      });
-    });
+  // Group every approved booking by slot — not just the dates currently on screen,
+  // so past or far-future clashes still show up here.
+  const bySlot = {};
+  Object.entries(allBookings).forEach(([k,b]) => {
+    if(b.status !== 'approved' || !b.slotId) return;
+    (bySlot[b.slotId] = bySlot[b.slotId] || []).push([k,b]);
   });
-  
-  let html = '<h2>⚠️ Booking Conflicts</h2><p style="color:var(--muted);margin-bottom:16px">The following time slots have multiple approved bookings:</p>';
-  
-  Object.entries(conflictMap).forEach(([slot, bookings]) => {
-    html += '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-weight:700;color:#991b1b;margin-bottom:8px">📍 ' + slot + '</div>';
-    bookings.forEach(b => {
-      html += '<div style="font-size:12px;color:#991b1b;margin:6px 0">• ' + b.code + ' - ' + b.name + ' (approved ' + b.approvedAt + ')</div>';
+  const clashes = Object.values(bySlot).filter(arr => arr.length > 1)
+    .sort((x,y) => (x[0][1].date + x[0][1].time).localeCompare(y[0][1].date + y[0][1].time));
+
+  let html = '<h2>⚠️ Booking Conflicts</h2><p style="color:var(--muted);margin-bottom:16px">These time slots have more than one approved booking:</p>';
+  if(clashes.length === 0) html += '<p>No conflicts 🎉</p>';
+
+  clashes.forEach(arr => {
+    const first = arr[0][1];
+    const sameStudent = arr.every(([k,b]) => b.code === first.code);
+    html += '<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-weight:700;color:#991b1b;margin-bottom:4px">📍 ' + formatDayLabel(first.date) + ' — ' + first.time + '</div>';
+    if(sameStudent) html += '<div style="font-size:11px;color:#92400e;margin-bottom:6px">Same student booked twice — just remove one copy.</div>';
+    arr.forEach(([k,b]) => {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#991b1b;margin:6px 0"><span>• ' + b.code + ' - ' + (studentNames[b.code] || b.code) + ' (approved ' + new Date(b.approvedAt || b.ts).toLocaleString('en-GB') + ')</span>' +
+        '<button onclick="closeConflictModal();deleteBooking(' + "'" + k + "', '" + b.code + "', '" + formatDayLabel(b.date) + "', '" + b.time + "'" + ')" style="padding:4px 10px;background:var(--warning);color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:700;font-size:11px;white-space:nowrap">Remove this copy</button></div>';
     });
     html += '</div>';
   });
-  
-  html += '<div style="margin-top:16px"><button onclick="closeConflictModal()" style="width:100%;padding:10px;background:var(--brand);color:#fff;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:\'DM Sans\',sans-serif">Close</button></div>';
-  
+
+  html += '<div style="margin-top:16px"><button onclick="closeConflictModal()" style="width:100%;padding:10px;background:var(--brand);color:#fff;border:0;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit">Close</button></div>';
+
   document.getElementById('messageModal').innerHTML = html;
   document.getElementById('messageLightbox').classList.add('show');
 }

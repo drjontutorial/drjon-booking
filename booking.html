@@ -549,6 +549,9 @@ function submitBooking() {
   if(code.length!==4) {showMsg('Code must be 4 digits','error');return;}
   if(!VALID_CODES.includes(code)) {showMsg('Invalid code','error');return;}
   if(selected.length===0) {showMsg('Select slots first','error');return;}
+  if(window._submitting) return; // ignore double-clicks while saving
+  window._submitting = true;
+  const toSend = selected.length;
   
   const {ref,push,db:fbdb} = window.firebaseDB;
   const tzSel = document.getElementById('tzSelect');
@@ -570,7 +573,8 @@ function submitBooking() {
       ts: Date.now()
     }).then(() => {
       successCount++;
-      if(successCount === selected.length) {
+      if(successCount === toSend) {
+        window._submitting = false;
         showMsg('✅ ' + successCount + ' booking(s) submitted!','success');
         selected = [];
         ALL_CHECKS.forEach(c => {c.checked=false; const lbl=document.querySelector('label[for="' + c.id + '"]');if(lbl)lbl.classList.remove('checked');});
@@ -580,6 +584,7 @@ function submitBooking() {
       }
     }).catch(err => {
       console.error("Error:",err);
+      window._submitting = false;
       showMsg('Error saving booking','error');
     });
   });
